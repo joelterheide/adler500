@@ -190,7 +190,19 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border:0;border-radiu
 /* ---------- Archiv ---------- */
 .archive{position:fixed;z-index:60;inset:0;background:var(--panel);color:var(--chrome-ink);transform:translateY(100%);transition:transform .5s cubic-bezier(.2,.9,.2,1);display:flex;flex-direction:column}
 .archive.open{transform:none}
-.archive-inner{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;padding:calc(env(safe-area-inset-top) + 18px) max(16px,env(safe-area-inset-right)) calc(env(safe-area-inset-bottom) + 40px) max(16px,env(safe-area-inset-left))}
+.archive{overflow:hidden}
+.static .stat,.static .entry,.static .chartcard{animation:none!important;opacity:1;transform:none}
+.static .bar i,.static .ring .fg{transition:none}
+.archive.detail .archive-inner{transform:translateX(-22%);opacity:0;pointer-events:none}
+.arch-detail{position:absolute;inset:0;background:var(--panel);transform:translateX(100%);transition:transform .45s cubic-bezier(.2,.9,.2,1);display:flex;flex-direction:column;visibility:hidden}
+.archive.detail .arch-detail{transform:none;visibility:visible}
+.detail-bar{padding:calc(env(safe-area-inset-top) + 12px) max(12px,env(safe-area-inset-right)) 6px max(12px,env(safe-area-inset-left));display:flex;align-items:center}
+.backbtn{border:0;background:transparent;font:inherit;font-size:16px;font-weight:600;color:var(--chrome-ink);display:inline-flex;align-items:center;gap:2px;padding:8px 12px 8px 4px;border-radius:12px}
+.backbtn:hover{background:var(--card)}
+.backbtn svg{width:22px;height:22px}
+.detail-scroll{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;padding:0 max(12px,env(safe-area-inset-right)) calc(env(safe-area-inset-bottom) + 30px) max(12px,env(safe-area-inset-left))}
+.wrap.narrow{max-width:560px}
+.archive-inner{transition:transform .45s cubic-bezier(.2,.9,.2,1),opacity .35s;flex:1;overflow:auto;-webkit-overflow-scrolling:touch;padding:calc(env(safe-area-inset-top) + 18px) max(16px,env(safe-area-inset-right)) calc(env(safe-area-inset-bottom) + 40px) max(16px,env(safe-area-inset-left))}
 .wrap{max-width:860px;margin:0 auto}
 .arch-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:6px}
 .arch-head h2{margin:0;font-family:var(--serif);font-weight:400;font-size:40px;letter-spacing:-.015em}
@@ -364,6 +376,10 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border:0;border-radiu
 <!-- Archiv -->
 <section class="archive" id="archive" aria-label="Archiv">
   <div class="archive-inner"><div class="wrap" id="archBody"></div></div>
+  <div class="arch-detail" id="archDetail" aria-label="Übersicht">
+    <div class="detail-bar"><button class="backbtn" id="detailBack"><svg class="i" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>Archiv</button></div>
+    <div class="detail-scroll"><div class="wrap narrow" id="detailBody"></div></div>
+  </div>
 </section>
 
 <!-- Leser -->
@@ -1126,6 +1142,7 @@ function closeAll() {
   closeMenu();
   if ($('#reader').classList.contains('open')) { closeReader(); return; }
   const m = document.querySelector('.modal.open'); if (m) { closeModal(m); return; }
+  if ($('#archive').classList.contains('detail')) { closeDetail(); return; }
   if ($('#archive').classList.contains('open')) closeArchive();
 }
 scrim.addEventListener('click', () => { document.querySelectorAll('.modal.open').forEach(closeModal); });
@@ -1226,7 +1243,11 @@ function showLog(d, opt = {}) {
   const wpm = act > 30000 ? words / (act / 60000) : 0;
   const p = clamp(words / goal, 0, 1);
   const firstStart = d.sessions.length ? d.sessions[0].start : d.created;
-  const body = $('#logBody');
+  const page = !!opt.page;                       // aus dem Archiv: eigene Seite statt Fenster
+  const body = page ? $('#detailBody') : $('#logBody');
+  (page ? $('#logBody') : $('#detailBody')).innerHTML = '';   // IDs nur einmal im Dokument
+  const close = () => page ? closeDetail() : closeModal($('#log'));
+  const visible = () => page ? $('#archive').classList.contains('detail') : $('#log').classList.contains('open');
   const sess = d.sessions.slice(-6);
   const maxW = Math.max(1, ...sess.map(s => Math.max(0, (s.w1 ?? s.w0) - s.w0)));
   body.innerHTML = `
@@ -1262,13 +1283,14 @@ function showLog(d, opt = {}) {
       ? `<button class="btn primary" data-a="new">${ICON.plus}Neues Blatt</button><button class="btn" data-a="continue">${ICON.pen}Weiterschreiben</button><button class="btn" data-a="archive">${ICON.book}Archiv</button>`
       : `<button class="btn primary" data-a="continue">${ICON.pen}Weiterschreiben</button><button class="btn" data-a="read">${ICON.read}Lesen</button><button class="btn" data-a="export">${ICON.share}Export</button><button class="btn danger" data-a="delete">${ICON.trash}</button>`}
   </div>`;
-  openModal($('#log'));
+  if (page) { $('#archive').classList.add('detail'); $('#archDetail').querySelector('.detail-scroll').scrollTop = 0; }
+  else openModal($('#log'));
   // Titel
-  const ti = $('#logTitle');
+  const ti = body.querySelector('#logTitle');
   ti.addEventListener('input', () => { d.title = ti.value; d.updated = Date.now(); persistDocs(); });
   ti.addEventListener('keydown', e => { if (e.key === 'Enter') ti.blur(); });
   // Route-Animation
-  const path = $('#routePath'), plane = $('#plane'), Lp = path.getTotalLength();
+  const path = body.querySelector('#routePath'), plane = body.querySelector('#plane'), Lp = path.getTotalLength();
   path.style.strokeDasharray = Lp; path.style.strokeDashoffset = Lp;
   const t0 = performance.now() + 250, dur = 1600;
   const pStart = path.getPointAtLength(0); plane.setAttribute('transform', `translate(${pStart.x},${pStart.y})`);
@@ -1278,7 +1300,7 @@ function showLog(d, opt = {}) {
     const pt = path.getPointAtLength(len), pt2 = path.getPointAtLength(Math.min(Lp, len + 1));
     const ang = Math.atan2(pt2.y - pt.y, pt2.x - pt.x) * 180 / Math.PI;
     plane.setAttribute('transform', `translate(${pt.x},${pt.y}) rotate(${ang + 45})`);
-    if (t < 1 && $('#log').classList.contains('open')) requestAnimationFrame(fly);
+    if (t < 1 && visible()) requestAnimationFrame(fly);
   };
   requestAnimationFrame(fly);
   // Zahlen
@@ -1289,20 +1311,20 @@ function showLog(d, opt = {}) {
     if (el.dataset.p) animateNum(el, +el.dataset.p, 1300, v => v.toLocaleString('de-DE', { minimumFractionDigits:1, maximumFractionDigits:1 }), delay);
   });
   body.querySelectorAll('.grid6 .v[data-w]').forEach(el => animateNum(el, +el.dataset.w, 1300, v => `${fmtN(v)}/min`, 570));
-  setTimeout(() => { body.querySelectorAll('.srow i').forEach((el, i) => setTimeout(() => el.style.width = el.dataset.w + '%', i * 80)); const hl = $('#sessHl'); if (hl) hl.classList.add('show'); }, 400);
+  setTimeout(() => { body.querySelectorAll('.srow i').forEach((el, i) => setTimeout(() => el.style.width = el.dataset.w + '%', i * 80)); const hl = body.querySelector('#sessHl'); if (hl) hl.classList.add('show'); }, 400);
   // Aktionen
   body.querySelectorAll('[data-a]').forEach(b => b.addEventListener('click', () => {
     const a = b.dataset.a;
-    if (a === 'new') { closeModal($('#log')); loadDoc(newDoc()); toast('Neues Blatt eingespannt'); Sound.carriage(); }
-    if (a === 'continue') { closeModal($('#log')); closeArchive(true); d.finished = null; if (doc !== d) loadDoc(d); else saveNow(); setTimeout(focusInput, 80); }
-    if (a === 'archive') { closeModal($('#log')); openArchive(); }
+    if (a === 'new') { close(); loadDoc(newDoc()); toast('Neues Blatt eingespannt'); Sound.carriage(); }
+    if (a === 'continue') { close(); closeArchive(true); d.finished = null; if (doc !== d) loadDoc(d); else saveNow(); setTimeout(focusInput, 80); }
+    if (a === 'archive') { close(); openArchive(); }
     if (a === 'read') openReader(d);
     if (a === 'export') toggleExportMenu(d, b);
     if (a === 'delete') {
       if (!confirm(`„${docTitle(d)}“ wirklich löschen? Das lässt sich nicht rückgängig machen.`)) return;
       docs = docs.filter(x => x !== d);
       if (doc === d) { doc = null; loadDoc(docs.find(x => !x.finished) || newDoc()); }
-      persistDocs(); closeModal($('#log')); renderArchive(); toast('Gelöscht');
+      persistDocs(); close(); renderArchive(); toast('Gelöscht');
     }
   }));
 }
@@ -1310,14 +1332,21 @@ function showLog(d, opt = {}) {
 /* ================= Archiv ================= */
 let archQuery = '';
 function openArchive() { closeMenu(); input.blur(); saveNow(); renderArchive(); $('#archive').classList.add('open'); }
-function closeArchive(silent) { $('#archive').classList.remove('open'); if (!silent) setTimeout(focusInput, 60); }
+function closeDetail() { $('#archive').classList.remove('detail'); renderArchive(true); }
+$('#detailBack').addEventListener('click', closeDetail);
+// vom linken Rand nach rechts wischen = zurück
+(() => { let sx = null, sy = 0; const el = $('#archDetail');
+  el.addEventListener('touchstart', e => { const t = e.touches[0]; sx = t.clientX < 40 ? t.clientX : null; sy = t.clientY; }, { passive:true });
+  el.addEventListener('touchend', e => { if (sx === null) return; const t = e.changedTouches[0]; if (t.clientX - sx > 70 && Math.abs(t.clientY - sy) < 80) closeDetail(); sx = null; });
+})();
+function closeArchive(silent) { $('#archive').classList.remove('open', 'detail'); if (!silent) setTimeout(focusInput, 60); }
 function streak(dayMap) {
   let n = 0; const d = new Date(); d.setHours(12, 0, 0, 0);
   if (!dayMap[dayKey(d)]) d.setDate(d.getDate() - 1);
   while (dayMap[dayKey(d)]) { n++; d.setDate(d.getDate() - 1); }
   return n;
 }
-function renderArchive() {
+function renderArchive(quiet) {   // quiet: ohne Einblend-Animation (Rückkehr von der Übersicht)
   const all = docs.filter(d => d.text.length > 0 || d.finished);
   const dayMap = {};
   let totalW = 0, totalA = 0;
@@ -1332,7 +1361,7 @@ function renderArchive() {
   const list = all.filter(d => !q || docTitle(d).toLowerCase().includes(q) || d.text.toLowerCase().includes(q)).sort((a, b) => b.updated - a.updated);
   const sum14 = days.reduce((s, x) => s + x.w, 0);
   const body = $('#archBody');
-  body.classList.remove('in');
+  body.classList.remove('in'); body.classList.toggle('static', !!quiet);
   body.innerHTML = `
     <div class="arch-head">
       <div><div class="eyebrow">Logbuch</div><h2>Archiv</h2></div>
@@ -1364,19 +1393,20 @@ function renderArchive() {
   requestAnimationFrame(() => {
     body.classList.add('in');
     body.querySelectorAll('.stat .v').forEach((el, i) => {
-      if (el.dataset.n) animateNum(el, +el.dataset.n, 1200, fmtN, 100 + i * 70);
-      if (el.dataset.h) animateNum(el, +el.dataset.h, 1200, v => { const m = Math.round(v / 60000); return m >= 60 ? `${Math.floor(m/60)}h ${String(m%60).padStart(2,'0')}` : `${m} min`; }, 100 + i * 70);
+      const D = quiet ? 1 : 1200, W = quiet ? 0 : 100 + i * 70;
+      if (el.dataset.n) animateNum(el, +el.dataset.n, D, fmtN, W);
+      if (el.dataset.h) animateNum(el, +el.dataset.h, D, v => { const m = Math.round(v / 60000); return m >= 60 ? `${Math.floor(m/60)}h ${String(m%60).padStart(2,'0')}` : `${m} min`; }, W);
     });
     setTimeout(() => {
-      body.querySelectorAll('.bar i').forEach((el, i) => setTimeout(() => el.style.height = el.dataset.h + '%', i * 35));
+      body.querySelectorAll('.bar i').forEach((el, i) => setTimeout(() => el.style.height = el.dataset.h + '%', quiet ? 0 : i * 35));
       body.querySelectorAll('.ring .fg').forEach(el => el.style.strokeDashoffset = el.dataset.off);
-    }, 350);
+    }, quiet ? 0 : 350);
   });
   $('#aClose').onclick = () => closeArchive();
   $('#aNew').onclick = () => { closeArchive(true); loadDoc(newDoc()); Sound.init(); Sound.carriage(); toast('Neues Blatt eingespannt'); setTimeout(focusInput, 80); };
   const se = $('#aSearch');
   se.oninput = () => { archQuery = se.value; const pos = se.selectionStart; renderArchive(); const n = $('#aSearch'); n.focus(); try { n.setSelectionRange(pos, pos); } catch {} };
-  body.querySelectorAll('.entry').forEach(b => b.onclick = () => { const d = docs.find(x => x.id === b.dataset.id); if (d) showLog(d); });
+  body.querySelectorAll('.entry').forEach(b => b.onclick = () => { const d = docs.find(x => x.id === b.dataset.id); if (d) showLog(d, { page:true }); });
   $('#aBackup').onclick = backup;
   $('#aImport').onclick = () => $('#importFile').click();
 }
