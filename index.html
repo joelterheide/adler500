@@ -419,12 +419,13 @@ const ICON = {
 };
 
 /* ================= Einstellungen ================= */
-const DEFAULTS = { paper:'velin', font:'courier', machine:'portable', fontSize:20, cols:62,
+const DEFAULTS = { paper:'velin', font:'courier', machine:'rec', fontSize:20, cols:62,
   warmth:.62, brightness:.8, halo:.55,
   sound:true, volume:.7, keys:true, bell:true, ret:true, ambience:'none',
   forwardOnly:false, goal:1000, autoWrap:true };
 const S = Object.assign({}, DEFAULTS, store.get('adler500.settings', {}));
 if (S.ambience === 'surf') S.ambience = 'beach';
+if (!S.soundV2) { S.machine = 'rec'; S.soundV2 = true; }
 const saveSettings = () => store.set('adler500.settings', S);
 
 const PAPERS = { velin:'Vélin', leinen:'Leinen', schiefer:'Schiefer', nacht:'Nacht' };
@@ -440,18 +441,41 @@ const FONTS = {
 };
 // travel: Zeit vom Tastendruck bis der Typenhebel auf die Walze schlägt · ring: metallisches Nachklingen [Hz, Lautstärke, Dauer]
 const MACHINES = {
-  portable:{ label:'Reisemaschine', travel:.017, strike:1, platen:2300, thump:175, body:.8, press:1,
+  rec:{ label:'Aufnahme (echt)', sample:true, rate:1, gain:1 },
+  recHeavy:{ label:'Aufnahme · schwer', sample:true, rate:.86, gain:1.1, lp:5200 },
+  recLight:{ label:'Aufnahme · leicht', sample:true, rate:1.13, gain:.9 },
+  portable:{ label:'Reise (synth.)', travel:.017, strike:1, platen:2300, thump:175, body:.8, press:1,
     ring:[[2650,.07,.05],[4150,.04,.035],[6350,.022,.02]] },
-  office:{ label:'Büromaschine', travel:.024, strike:1.15, platen:1550, thump:118, body:1.15, press:1.25,
+  office:{ label:'Büro (synth.)', travel:.024, strike:1.15, platen:1550, thump:118, body:1.15, press:1.25,
     ring:[[1950,.06,.075],[3080,.035,.055],[4820,.018,.03]] },
-  electric:{ label:'Elektrische', travel:.007, strike:.7, platen:2900, thump:215, body:.55, press:.35,
+  electric:{ label:'Elektrisch (synth.)', travel:.007, strike:.7, platen:2900, thump:215, body:.55, press:.35,
     ring:[[3250,.03,.03]] }
 };
+if (!MACHINES[S.machine]) S.machine = 'rec';
 const AMBIENCES = { none:'Stille', forest:'Wald (Vögel)', night:'Sommernacht (Grillen)', beach:'Strand (Wellen & Möwen)', rain:'Regen am Fenster', fire:'Kaminfeuer' };
 
 /* ================= Klang (Web Audio, synthetisiert) ================= */
 const Sound = {
-  ctx:null, master:null, amb:null,
+  ctx:null, master:null, amb:null, buf:null, lastKey:-1,
+  // Ausschnitte aus der Aufnahme (Sekunden: Start, Länge)
+  SPRITE: {"keys": [[0.98701, 0.20451], [1.22152, 0.22], [1.47152, 0.22], [1.72152, 0.18206], [1.93358, 0.22], [2.18358, 0.21449], [2.42807, 0.22], [2.67807, 0.19204], [2.90011, 0.20451], [3.13463, 0.22], [3.38463, 0.17707], [3.5917, 0.22], [3.8417, 0.22], [4.0917, 0.21698], [4.33868, 0.22], [4.58868, 0.22]], "space": [[0.0, 0.22], [0.25, 0.22], [0.5, 0.22], [0.75, 0.20701]], "bell": [4.83868, 0.72807], "sr": 32000},
+  load() {
+    if (this.buf || this.loading || !this.ctx) return;
+    this.loading = true;
+    fetch('sounds/typewriter.wav').then(r => r.arrayBuffer()).then(ab => new Promise((ok, no) => {
+      const p = this.ctx.decodeAudioData(ab, ok, no); if (p && p.then) p.then(ok, no);
+    })).then(b => { this.buf = b; }).catch(() => { this.loading = false; });
+  },
+  play(seg, o = {}) {
+    const c = this.ctx, src = c.createBufferSource(); src.buffer = this.buf;
+    src.playbackRate.value = o.rate || 1;
+    const g = c.createGain(); g.gain.value = o.gain ?? 1;
+    let node = src.connect(g);
+    if (o.lp) { const f = c.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = o.lp; node = g.connect(f); }
+    node.connect(this.master);
+    src.start(c.currentTime + (o.delay || 0), seg[0], seg[1]);
+  },
+  pick(list) { let i; do { i = Math.random() * list.length | 0; } while (list.length > 1 && i === this.lastKey); this.lastKey = i; return list[i]; },
   init() {
     // iOS: Ton auch bei Stummschalter (Safari 17+), sonst gilt Web-Audio als "Umgebungsklang" und wird stummgeschaltet
     try { if (navigator.audioSession && navigator.audioSession.type !== 'playback') navigator.audioSession.type = 'playback'; } catch {}
@@ -459,6 +483,7 @@ const Sound = {
     const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
     const ctx = this.ctx = new AC();
     this.kick();
+    setTimeout(() => this.load(), 0);
     this.master = ctx.createGain(); this.master.connect(ctx.destination);
     const len = ctx.sampleRate * 2;
     this.white = ctx.createBuffer(1, len, ctx.sampleRate);
@@ -504,7 +529,16 @@ const Sound = {
   },
   key(kind) {
     if (!this.ok('keys')) return;
-    const t = this.ctx.currentTime + .003, m = MACHINES[S.machine], v = .92 + Math.random() * .16;
+    let m = MACHINES[S.machine];
+    if (m.sample) {
+      if (this.buf) {
+        const sp = this.SPRITE, seg = kind === 'space' ? this.pick(sp.space) : this.pick(sp.keys);
+        this.play(seg, { rate:m.rate * (.97 + Math.random() * .06) * (kind === 'space' ? .92 : 1), gain:m.gain * (.82 + Math.random() * .18) * (kind === 'space' ? .8 : 1), lp:m.lp });
+        return;
+      }
+      m = MACHINES.portable; this.load();
+    }
+    const t = this.ctx.currentTime + .003, v = .92 + Math.random() * .16;
     // 1) Taste geht runter
     this.noise(t, { freq:1100 * v, q:.9, peak:.1 * m.press, dur:.012, a:.0008 });
     if (kind === 'space') {
@@ -529,6 +563,7 @@ const Sound = {
   },
   back() {
     if (!this.ok('keys')) return;
+    if (MACHINES[S.machine].sample && this.buf) { this.play(this.pick(this.SPRITE.keys), { rate:.8, gain:.55, lp:3000 }); return; }
     const t = this.ctx.currentTime;
     this.noise(t, { freq:1400, q:1.2, peak:.35, dur:.035 });
     this.tone(t, { freq:190, to:110, peak:.3, dur:.06 });
@@ -541,6 +576,8 @@ const Sound = {
   },
   bell() {
     if (!this.ok('bell')) return;
+    if (this.buf) { this.play(this.SPRITE.bell, { gain:.9 }); return; }
+    this.load();
     const t = this.ctx.currentTime + .01;
     this.tone(t, { freq:2380, peak:.22, dur:1.6, a:.002 });
     this.tone(t, { freq:2380*2.76, peak:.06, dur:.7, a:.002 });
@@ -1049,7 +1086,6 @@ const SETTINGS_TABS = {
   'Blatt': [
     { k:'paper', type:'select', label:'Papier', desc:'Warmgrau, hell, blaugrau oder dunkel.', opts:PAPERS },
     { k:'font', type:'select', label:'Schrift', desc:'Klassisch, abgenutzt, fein, Kugelkopf, retro …', opts:Object.fromEntries(Object.entries(FONTS).map(([k,v]) => [k, v.label])) },
-    { k:'machine', type:'select', label:'Maschine', desc:'Verändert den Klang der Tasten und des Wagens.', opts:Object.fromEntries(Object.entries(MACHINES).map(([k,v]) => [k, v.label])) },
     { k:'fontSize', type:'range', label:'Schriftgröße', desc:'Auf dem Handy wird automatisch verkleinert.', min:14, max:28, step:1 },
     { k:'cols', type:'range', label:'Zeilenbreite', desc:'Anschläge pro Zeile, wie der Randsteller.', min:40, max:80, step:1 }
   ],
@@ -1062,6 +1098,7 @@ const SETTINGS_TABS = {
     { k:'sound', type:'toggle', label:'Ton', desc:'Alle Klänge an oder aus. (iPhone: Stummschalter beachten.)' },
     { k:'volume', type:'range', label:'Lautstärke', min:0, max:1, step:.01 },
     { k:'keys', type:'toggle', label:'Tastenanschlag' },
+    { k:'machine', type:'select', label:'Anschlag', desc:'Echte Aufnahme oder synthetischer Klang.', opts:Object.fromEntries(Object.entries(MACHINES).map(([k,v]) => [k, v.label])) },
     { k:'bell', type:'toggle', label:'Glocke', desc:'Klingelt beim Zeilenumbruch.' },
     { k:'ret', type:'toggle', label:'Wagenrücklauf' },
     { k:'ambience', type:'select', label:'Atmosphäre', opts:AMBIENCES }

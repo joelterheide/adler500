@@ -20,3 +20,6 @@ Einfach `index.html` im Browser öffnen – oder über GitHub Pages hosten (Sett
 Für Service Worker/Installation muss die Seite über `http(s)` laufen, z. B. lokal: `python3 -m http.server`.
 
 Alle Texte liegen nur lokal im Browser (localStorage). Sichere dein Archiv regelmäßig über „Archiv sichern“.
+
+## Klänge
+Tastenanschläge und Glocke stammen aus der Aufnahme „Typewriter typing“ (freesound_community, über Pixabay), in `sounds/typewriter.wav` als einzelne Ausschnitte zusammengefasst. Wagenrücklauf und Atmosphären werden im Browser erzeugt.
