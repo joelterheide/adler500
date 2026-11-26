@@ -452,7 +452,10 @@ const MACHINES = {
     ring:[[3250,.03,.03]] }
 };
 if (!MACHINES[S.machine]) S.machine = 'rec';
-const AMBIENCES = { none:'Stille', forest:'Wald (Vögel)', night:'Sommernacht (Grillen)', beach:'Strand (Wellen & Möwen)', rain:'Regen am Fenster', fire:'Kaminfeuer' };
+const AMBIENCES = { none:'Stille', birdsRec:'Vögel auf dem Land', rainRec:'Regen', wavesRec:'Meereswellen',
+  forest:'Wald (synth.)', night:'Sommernacht (synth.)', beach:'Strand (synth.)', rain:'Regen am Fenster (synth.)', fire:'Kaminfeuer (synth.)' };
+// Aufnahmen: Datei und Lautstärke
+const AMB_FILES = { birdsRec:{ src:'sounds/birds.m4a', gain:1 }, rainRec:{ src:'sounds/rain.m4a', gain:.9 }, wavesRec:{ src:'sounds/waves.m4a', gain:.9 } };
 
 /* ================= Klang (Web Audio, synthetisiert) ================= */
 const Sound = {
@@ -626,6 +629,33 @@ const Sound = {
     };
     let iv = null;
     const amb = { g, nodes, iv:null, timers:[], stopped:false };
+    if (AMB_FILES[kind]) {
+      // Aufnahme laden (einmal pro Sitzung) und mit weicher Überblendung endlos wiederholen
+      const file = AMB_FILES[kind]; this.ambBufs = this.ambBufs || {};
+      const XF = 4, N = 64, fadeIn = new Float32Array(N), fadeOut = new Float32Array(N);
+      for (let i = 0; i < N; i++) { fadeIn[i] = Math.sin(i / (N - 1) * Math.PI / 2) * file.gain; fadeOut[i] = Math.cos(i / (N - 1) * Math.PI / 2) * file.gain; }
+      const startLoop = buf => {
+        if (amb.stopped) return;
+        const one = (when, offset) => {
+          const src = c.createBufferSource(); src.buffer = buf;
+          const gg = c.createGain(), len = buf.duration - offset;
+          gg.gain.setValueAtTime(0, when); gg.gain.setValueCurveAtTime(fadeIn, when, XF);
+          gg.gain.setValueCurveAtTime(fadeOut, when + len - XF, XF);
+          src.connect(gg).connect(g); src.start(when, offset); src.stop(when + len + .05);
+          nodes.push(src, gg); return when + len - XF;   // Startzeit der nächsten Runde
+        };
+        let next = one(c.currentTime + .05, Math.random() * buf.duration * .5);
+        const ahead = () => {   // immer eine Runde im Voraus planen
+          if (amb.stopped) return;
+          const startAt = next; next = one(startAt, 0);
+          amb.timers.push(setTimeout(ahead, Math.max(1, (startAt - c.currentTime) * 1000 + 500)));
+        };
+        ahead();
+      };
+      if (this.ambBufs[kind]) startLoop(this.ambBufs[kind]);
+      else fetch(file.src).then(r => r.arrayBuffer()).then(ab => new Promise((ok, no) => { const p = c.decodeAudioData(ab, ok, no); if (p && p.then) p.then(ok, no); }))
+        .then(buf => { this.ambBufs[kind] = buf; startLoop(buf); }).catch(() => toast('Klang konnte nicht geladen werden'));
+    }
     // wiederkehrendes Ereignis in zufälligen Abständen
     const every = (min, max, fn, first) => {
       const go = () => { if (amb.stopped) return; fn(); amb.timers.push(setTimeout(go, (min + Math.random() * (max - min)) * 1000)); };

@@ -22,4 +22,4 @@ Für Service Worker/Installation muss die Seite über `http(s)` laufen, z. B. lo
 Alle Texte liegen nur lokal im Browser (localStorage). Sichere dein Archiv regelmäßig über „Archiv sichern“.
 
 ## Klänge
-Tastenanschläge und Glocke stammen aus der Aufnahme „Typewriter typing“ (freesound_community, über Pixabay), in `sounds/typewriter.wav` als einzelne Ausschnitte zusammengefasst. Wagenrücklauf und Atmosphären werden im Browser erzeugt.
+Tastenanschläge und Glocke stammen aus der Aufnahme „Typewriter typing“ (freesound_community, über Pixabay), in `sounds/typewriter.wav` als einzelne Ausschnitte zusammengefasst. Atmosphären „Vögel auf dem Land“ (strachszydlo), „Regen“ (universfield) und „Meereswellen“ sind gekürzte, lautstärkeangeglichene Ausschnitte aus vom Nutzer bereitgestellten Aufnahmen (`sounds/*.m4a`). Wagenrücklauf und die mit „synth.“ markierten Atmosphären werden im Browser erzeugt.
