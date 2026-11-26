@@ -35,18 +35,31 @@
 html,body{margin:0;height:100%;overflow:hidden;background:var(--desk);color:var(--ink);font-family:var(--ui);-webkit-font-smoothing:antialiased;overscroll-behavior:none}
 body{position:fixed;inset:0;touch-action:manipulation}
 button{font:inherit;color:inherit;cursor:pointer}
-#app{position:fixed;left:0;right:0;top:0;height:var(--vvh,100%);overflow:hidden;transition:background .5s}
+#app{position:fixed;left:0;right:0;top:0;height:var(--vvh,100%);overflow:hidden;background:var(--desk);transition:background .5s}
 
 /* ---------- Lampe ---------- */
-.lamp{position:absolute;inset:0;pointer-events:none;mix-blend-mode:screen;transition:opacity .4s;
+.lamp{position:absolute;left:-100vw;width:200vw;top:0;height:calc(var(--typing-y) - .35*var(--fs));pointer-events:none;mix-blend-mode:screen;
+  transform:translateX(calc(var(--caret-x) + var(--cw)*.5px));transition:opacity .7s ease;will-change:transform;
+  --la:var(--lamp-a);
   background:
-   radial-gradient(ellipse calc(46vmax*var(--halo)) calc(30vmax*var(--halo)) at var(--pool-x) calc(var(--typing-y) - 4px), rgba(var(--lamp),calc(var(--lamp-a)*.9)) 0%, rgba(var(--lamp),calc(var(--lamp-a)*.45)) 38%, rgba(var(--lamp),0) 72%),
-   radial-gradient(ellipse calc(70vmax*var(--halo)) calc(70vmax*var(--halo)) at var(--src-x) var(--src-y), rgba(var(--lamp),calc(var(--lamp-a)*.5)) 0%, rgba(var(--lamp),calc(var(--lamp-a)*.18)) 45%, rgba(var(--lamp),0) 75%);}
-[data-paper="leinen"] .lamp{mix-blend-mode:multiply;opacity:.25}
-.vignette{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 120% 90% at 40% 45%, transparent 55%, rgba(0,0,0,.22) 100%)}
+   conic-gradient(from 0deg at 50% 100%,
+     rgba(var(--lamp),var(--la)) 0deg, rgba(var(--lamp),calc(var(--la)*.97)) calc(28deg*var(--halo)),
+     rgba(var(--lamp),calc(var(--la)*.62)) calc(40deg*var(--halo)), rgba(var(--lamp),calc(var(--la)*.24)) calc(51deg*var(--halo)),
+     rgba(var(--lamp),calc(var(--la)*.06)) calc(62deg*var(--halo)), rgba(var(--lamp),0) calc(74deg*var(--halo)),
+     rgba(var(--lamp),0) calc(360deg - 74deg*var(--halo)), rgba(var(--lamp),calc(var(--la)*.06)) calc(360deg - 62deg*var(--halo)),
+     rgba(var(--lamp),calc(var(--la)*.24)) calc(360deg - 51deg*var(--halo)), rgba(var(--lamp),calc(var(--la)*.62)) calc(360deg - 40deg*var(--halo)),
+     rgba(var(--lamp),calc(var(--la)*.97)) calc(360deg - 28deg*var(--halo)), rgba(var(--lamp),var(--la)) 360deg);
+  -webkit-mask-image:radial-gradient(ellipse calc(80vh*var(--reach)) calc(100vh*var(--reach)) at 50% 100%, #000 0%, #000 30%, rgba(0,0,0,.62) 58%, rgba(0,0,0,.25) 80%, transparent 100%);
+          mask-image:radial-gradient(ellipse calc(80vh*var(--reach)) calc(100vh*var(--reach)) at 50% 100%, #000 0%, #000 30%, rgba(0,0,0,.62) 58%, rgba(0,0,0,.25) 80%, transparent 100%)}
+.lamp::after{content:"";position:absolute;inset:0;
+  background:radial-gradient(ellipse calc(60vh*var(--reach)) calc(38vh*var(--reach)) at 50% 38%, rgba(var(--lamp),calc(var(--la)*.2)) 0%, rgba(var(--lamp),0) 100%)}
+.lamp.ret{transition:transform .36s cubic-bezier(.3,.9,.25,1),opacity .7s ease}
+.lamp.step{transition:transform .07s linear,opacity .7s ease}
+[data-paper="leinen"] .lamp{mix-blend-mode:normal}
+.vignette{position:absolute;inset:0;pointer-events:none;transition:opacity .7s;background:radial-gradient(ellipse 120% 90% at 40% 45%, transparent 55%, rgba(0,0,0,.22) 100%)}
 
 /* ---------- Kopfzeile ---------- */
-.topbar{position:absolute;top:0;left:0;right:0;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:12px;
+.topbar{position:absolute;top:0;left:0;right:0;z-index:20;transition:opacity .6s,transform .6s;display:flex;align-items:center;justify-content:space-between;gap:12px;
   padding:calc(env(safe-area-inset-top) + 14px) max(16px,env(safe-area-inset-right)) 10px max(16px,env(safe-area-inset-left))}
 .logo{font-family:'Courier Prime',monospace;font-weight:700;font-size:22px;letter-spacing:.02em;color:var(--ink);opacity:.9;white-space:nowrap;user-select:none}
 [data-paper="velin"] .logo,[data-paper="schiefer"] .logo{color:#f3ede4}
@@ -71,25 +84,35 @@ svg.i{fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;strok
 .sheet.glide{transition:transform .5s cubic-bezier(.2,.8,.2,1)}
 .ln{height:var(--lh);text-shadow:0 0 .6px currentColor}
 .ln.para{}
-.platen{position:absolute;left:0;right:0;height:3px;top:calc(var(--typing-y) - .28*var(--fs));background:var(--platen);opacity:.82;
-  box-shadow:0 1px 0 rgba(255,255,255,.12),0 3px 10px rgba(0,0,0,.25)}
-.platen .prog{position:absolute;left:0;top:0;bottom:0;width:0;background:var(--amber);box-shadow:0 0 12px rgba(217,164,65,.6);transition:width .6s cubic-bezier(.2,.8,.2,1)}
-.carriage{position:absolute;top:calc(var(--typing-y) - .28*var(--fs) - 1px);left:0;transform:translateX(var(--caret-x));pointer-events:none;z-index:2}
+.platen{position:absolute;left:0;right:0;height:5px;top:calc(var(--typing-y) + 6px);background:linear-gradient(to bottom,#3a3430,var(--platen) 45%,#2a2522);
+  box-shadow:0 1px 0 rgba(255,255,255,.10),0 4px 12px rgba(0,0,0,.22);transition:opacity .7s}
+.carriage{position:absolute;top:calc(var(--typing-y) + 8.5px);left:0;transform:translateX(var(--caret-x));pointer-events:none;z-index:2;transition:opacity .7s}
 .carriage.ret{transition:transform .36s cubic-bezier(.3,.9,.25,1)}
 .carriage.step{transition:transform .07s linear}
-.carriage .slot{position:absolute;left:0;bottom:4px;width:calc(var(--cw)*1px);height:2px;background:var(--ink);opacity:.85;animation:blink 1.1s steps(1) infinite}
-.carriage .nib{position:absolute;left:calc(var(--cw)*.5px - 7px);top:5px;width:14px;height:9px;background:var(--amber);clip-path:polygon(50% 0,100% 100%,0 100%);filter:drop-shadow(0 1px 1px rgba(0,0,0,.3))}
-.typing .carriage .slot{animation:none;opacity:.85}
-@keyframes blink{50%{opacity:0}}
-.hint{position:absolute;left:var(--left);top:calc(var(--typing-y) + 22px);font-family:var(--serif);font-style:italic;font-size:17px;color:var(--ink-soft);pointer-events:none;transition:opacity .5s;max-width:calc(100vw - 32px)}
+.carriage .pill{position:absolute;left:calc(var(--cw)*.5px - 33px);top:-12.5px;width:66px;height:25px;border-radius:13px;
+  background:linear-gradient(to bottom,#ece8e4,#d3cdc8);box-shadow:inset 0 1px 0 rgba(255,255,255,.75),0 2px 6px rgba(0,0,0,.22);
+  display:flex;align-items:center;justify-content:center;gap:6px}
+.carriage .pill i{width:8px;height:8px;border-radius:50%;background:#4b4642;transition:background .5s}
+.carriage .pill i.on{background:#e4a748;box-shadow:0 0 4px rgba(228,167,72,.6)}
+.carriage .tbar{position:absolute;left:calc(var(--cw)*.5px - .36*var(--fs));top:calc(-12.5px - .92*var(--fs));width:calc(.72*var(--fs));height:calc(.92*var(--fs));transform-origin:50% 100%}
+.carriage .tbar::before{content:"";position:absolute;left:0;right:0;top:0;height:max(3px,calc(.15*var(--fs)));background:var(--ink);border-radius:1px}
+.carriage .tbar::after{content:"";position:absolute;left:50%;top:0;bottom:0;width:max(3px,calc(.15*var(--fs)));transform:translateX(-50%);background:var(--ink)}
+.carriage .tbar.strike{animation:strike .12s ease-out}
+@keyframes strike{40%{transform:translateY(-3px) scaleY(.88)}}
+.hint{position:absolute;left:var(--left);top:calc(var(--typing-y) + 40px);font-family:var(--serif);font-style:italic;font-size:17px;color:var(--ink-soft);pointer-events:none;transition:opacity .5s;max-width:calc(100vw - 32px)}
 [data-paper="velin"] .hint,[data-paper="schiefer"] .hint{color:rgba(243,237,228,.8)}
 .locked-flash .platen{animation:shake .28s}
 @keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
-.back-to-line{position:absolute;left:50%;top:calc(var(--typing-y) + 30px);transform:translateX(-50%);z-index:6;border:0;border-radius:99px;padding:8px 14px;background:var(--btn);color:var(--btn-ink);font-size:13px;font-weight:500;box-shadow:0 4px 14px rgba(0,0,0,.2);opacity:0;pointer-events:none;transition:opacity .25s}
+.back-to-line{position:absolute;left:50%;top:calc(var(--typing-y) + 40px);transform:translateX(-50%);z-index:6;border:0;border-radius:99px;padding:8px 14px;background:var(--btn);color:var(--btn-ink);font-size:13px;font-weight:500;box-shadow:0 4px 14px rgba(0,0,0,.2);opacity:0;pointer-events:none;transition:opacity .25s}
 .back-to-line.show{opacity:1;pointer-events:auto}
 
+/* ---------- Fokus-Modus: nur die Schrift ---------- */
+#app.focus .lamp,#app.focus .vignette,#app.focus .platen,#app.focus .carriage,#app.focus .hint,#app.focus .statusbar,#app.focus .back-to-line{opacity:0!important;pointer-events:none}
+#app.focus .topbar{opacity:0;transform:translateY(-12px);pointer-events:none}
+.sheet{transition:color .6s}
+
 /* ---------- Statuszeile ---------- */
-.statusbar{position:absolute;left:0;right:0;bottom:0;z-index:10;display:flex;align-items:flex-end;justify-content:space-between;gap:12px;
+.statusbar{position:absolute;left:0;right:0;bottom:0;z-index:10;transition:opacity .6s;display:flex;align-items:flex-end;justify-content:space-between;gap:12px;
   padding:10px max(20px,env(safe-area-inset-right)) calc(env(safe-area-inset-bottom) + 16px) max(20px,env(safe-area-inset-left));font-size:14px;color:var(--ink-soft);pointer-events:none;font-variant-numeric:tabular-nums}
 [data-paper="velin"] .statusbar,[data-paper="schiefer"] .statusbar{color:rgba(243,237,228,.78)}
 .statusbar .left{display:flex;gap:14px;white-space:nowrap}
@@ -269,7 +292,6 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border:0;border-radiu
 </head>
 <body>
 <div id="app" data-paper="velin">
-  <div class="lamp" id="lamp"></div>
   <div class="vignette"></div>
 
   <header class="topbar">
@@ -284,10 +306,11 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border:0;border-radiu
     </nav>
   </header>
 
+  <div class="lamp" id="lamp"></div>
   <main class="stage" id="stage">
     <div class="sheet-mask"><div class="sheet" id="sheet"></div></div>
-    <div class="platen"><div class="prog" id="prog"></div></div>
-    <div class="carriage" id="carriage"><span class="slot"></span><span class="nib"></span></div>
+    <div class="platen"></div>
+    <div class="carriage" id="carriage"><span class="tbar" id="tbar"></span><span class="pill" id="pill" title="Fortschritt zum Wortziel"><i></i><i></i><i></i></span></div>
     <div class="hint" id="hint">Tipp einfach los. Jeder Anschlag zählt.</div>
     <button class="back-to-line" id="backToLine">↓ Zurück zur Zeile</button>
   </main>
@@ -531,7 +554,7 @@ const closeSession = () => { const s = openSession(); if (s) { s.open = false; i
 const IDLE_SPLIT = 15 * 60 * 1000;
 
 /* ================= Zustand Schreibmaschine ================= */
-const app = $('#app'), sheet = $('#sheet'), carriage = $('#carriage'), input = $('#input'), stage = $('#stage');
+const app = $('#app'), lampEl = $('#lamp'), sheet = $('#sheet'), carriage = $('#carriage'), input = $('#input'), stage = $('#stage');
 const L = { cw:12, lh:35, fs:20, cols:62, left:40, typingY:400, vw:0, vh:0 };
 let lines = [], lineEls = [], scrollBack = 0, composing = false, dirty = false, saveTimer = 0, typingTimer = 0;
 
@@ -557,8 +580,6 @@ function layout() {
   st.setProperty('--fs', fs + 'px'); st.setProperty('--lh', L.lh + 'px'); st.setProperty('--typing-y', L.typingY + 'px');
   st.setProperty('--left', L.left + 'px'); st.setProperty('--colw', Math.ceil(L.cols * cw + cw) + 'px'); st.setProperty('--cw', cw);
   st.setProperty('--typeface', fam);
-  st.setProperty('--pool-x', (L.left + L.cols * cw * .42) + 'px');
-  st.setProperty('--src-x', Math.max(0, L.left - 60) + 'px'); st.setProperty('--src-y', Math.max(40, L.typingY - L.vh * .55) + 'px');
   render(true);
 }
 
@@ -601,13 +622,15 @@ function render(instant, mode) {
   const y = L.typingY - L.lh - (last - scrollBack) * L.lh;
   sheet.classList.toggle('feed', mode === 'feed');
   sheet.classList.toggle('glide', mode === 'glide');
-  if (instant) { sheet.classList.remove('feed', 'glide'); carriage.classList.remove('ret', 'step'); }
+  if (instant) { sheet.classList.remove('feed', 'glide'); carriage.classList.remove('ret', 'step'); lampEl.classList.remove('ret', 'step'); }
   sheet.style.transform = `translate3d(${L.left}px, ${y}px, 0)`;
   const col = Math.min(lines[last].t.length, L.cols);
   carriage.classList.toggle('ret', mode === 'feed');
   carriage.classList.toggle('step', mode === 'step');
+  lampEl.classList.toggle('ret', mode === 'feed');
+  lampEl.classList.toggle('step', mode === 'step');
   app.style.setProperty('--caret-x', (L.left + col * L.cw) + 'px');
-  carriage.style.opacity = scrollBack ? .25 : 1;
+  carriage.style.opacity = scrollBack ? .25 : '';
   $('#backToLine').classList.toggle('show', scrollBack > 1);
   $('#hint').style.opacity = doc.text.length ? 0 : 1;
   updateStatus();
@@ -628,7 +651,8 @@ function updateStatus() {
   const w = countWords(doc.text), g = doc.goal || S.goal;
   $('#count').textContent = `${fmtN(w)} / ${fmtN(g)} Wörter`;
   $('#timer').textContent = fmtDur(liveActive());
-  $('#prog').style.width = (clamp(w / g, 0, 1) * 100) + '%';
+  const pr = w / g; $('#pill').querySelectorAll('i').forEach((d, i) => d.classList.toggle('on', pr >= (i + 1) / 3 || (i === 0 && w > 0)));
+  $('#pill').title = `${Math.round(clamp(pr, 0, 1) * 100)} % des Wortziels`;
 }
 setInterval(() => { if (doc) $('#timer').textContent = fmtDur(liveActive()); }, 1000);
 
@@ -684,6 +708,7 @@ function applyText(v) {
     else Sound.key();
     if (nl.length === oldLines && oldCol < L.cols - 8 && newCol >= L.cols - 8) Sound.bell();
   }
+  const tbar = $('#tbar'); tbar.classList.remove('strike'); void tbar.offsetWidth; if (!removed) tbar.classList.add('strike');
   app.classList.add('typing'); clearTimeout(typingTimer); typingTimer = setTimeout(() => app.classList.remove('typing'), 700);
   markDirty();
 }
@@ -713,6 +738,7 @@ input.addEventListener('keydown', e => {
   const k = e.key, mod = e.metaKey || e.ctrlKey;
   if (mod && (k === 's' || k === 'S')) { e.preventDefault(); saveNow(); toast('Gespeichert'); return; }
   if (mod && k === 'Enter') { e.preventDefault(); finish(); return; }
+  if (mod && k === '.') { e.preventDefault(); setFocus(!app.classList.contains('focus')); return; }
   if (k === 'Tab') { e.preventDefault(); const v = input.value + '   '; input.value = v; applyText(v); return; }
   if (k === 'PageUp' || k === 'ArrowUp') { e.preventDefault(); scrollLines(k === 'PageUp' ? 8 : 1); return; }
   if (k === 'PageDown' || k === 'ArrowDown') { e.preventDefault(); scrollLines(k === 'PageDown' ? -8 : -1); return; }
@@ -737,21 +763,40 @@ function scrollLines(n) {
 }
 let wheelAcc = 0;
 stage.addEventListener('wheel', e => { e.preventDefault(); wheelAcc += e.deltaY; const step = L.lh; while (Math.abs(wheelAcc) >= step) { scrollLines(wheelAcc < 0 ? 1 : -1); wheelAcc -= Math.sign(wheelAcc) * step; } }, { passive:false });
-let touchY = null, touchMoved = false, touchAcc = 0;
-stage.addEventListener('touchstart', e => { touchY = e.touches[0].clientY; touchMoved = false; touchAcc = 0; Sound.init(); }, { passive:true });
+let t0 = null, twoFinger = false, touchY = null, touchAcc = 0;
+stage.addEventListener('touchstart', e => {
+  Sound.init();
+  const t = e.touches[0]; twoFinger = e.touches.length > 1;
+  if (!twoFinger) t0 = { x:t.clientX, y:t.clientY, time:Date.now() };
+  touchY = t.clientY; touchAcc = 0;
+}, { passive:true });
 stage.addEventListener('touchmove', e => {
-  if (touchY === null) return; e.preventDefault();
+  e.preventDefault();
+  if (e.touches.length > 1) twoFinger = true;
+  if (!twoFinger) return;
   const y = e.touches[0].clientY; touchAcc += y - touchY; touchY = y;
-  if (Math.abs(touchAcc) > 6) touchMoved = true;
   while (Math.abs(touchAcc) >= L.lh * .8) { scrollLines(touchAcc > 0 ? 1 : -1); touchAcc -= Math.sign(touchAcc) * L.lh * .8; }
 }, { passive:false });
-stage.addEventListener('touchend', () => { if (!touchMoved) focusInput(); touchY = null; });
+stage.addEventListener('touchend', e => {
+  if (e.touches.length) return;
+  if (!twoFinger && t0) {
+    const t = e.changedTouches[0], dx = t.clientX - t0.x, dy = t.clientY - t0.y;
+    if (Math.abs(dy) > 45 && Math.abs(dy) > Math.abs(dx) * 1.3) setFocus(dy > 0);
+    else if (Math.abs(dx) < 10 && Math.abs(dy) < 10) focusInput();
+  }
+  t0 = null; twoFinger = false;
+});
+function setFocus(on) {
+  if (app.classList.contains('focus') === on) return;
+  app.classList.toggle('focus', on);
+  if (on && !store.get('adler500.focusHint', false)) { toast('Nach oben wischen blendet alles wieder ein'); store.set('adler500.focusHint', true); }
+}
 stage.addEventListener('mousedown', e => { e.preventDefault(); Sound.init(); focusInput(); });
 $('#backToLine').addEventListener('click', e => { e.stopPropagation(); scrollBack = 0; render(false, 'glide'); focusInput(); });
 $('#backToLine').addEventListener('mousedown', e => e.stopPropagation());
 $('#backToLine').addEventListener('touchend', e => { e.stopPropagation(); e.preventDefault(); scrollBack = 0; render(false, 'glide'); focusInput(); });
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') { closeAll(); return; }
+  if (e.key === 'Escape') { if (!anyOverlay() && app.classList.contains('focus')) { setFocus(false); return; } closeAll(); return; }
   if (!anyOverlay() && document.activeElement !== input && e.key.length === 1 && !e.metaKey && !e.ctrlKey) { focusInput(); }
 });
 
@@ -779,9 +824,10 @@ function applyLook() {
   const cool = [214, 232, 255], warm = [255, 206, 140];
   const c = cool.map((v, i) => Math.round(v + (warm[i] - v) * S.warmth));
   app.style.setProperty('--lamp', c.join(','));
-  const base = { velin:.95, leinen:.6, schiefer:.85, nacht:.42 }[S.paper];
+  const base = { velin:.95, leinen:.45, schiefer:.85, nacht:.5 }[S.paper];
   app.style.setProperty('--lamp-a', (base * (.15 + S.brightness * .85)).toFixed(3));
-  app.style.setProperty('--halo', (.55 + S.halo * .95).toFixed(3));
+  app.style.setProperty('--halo', (.6 + S.halo * .8).toFixed(3));
+  app.style.setProperty('--reach', (.65 + S.halo * .7).toFixed(3));
 }
 const tb = (id, fn) => { const b = $(id); b.addEventListener('click', e => { Sound.init(); fn(e); }); b.addEventListener('mousedown', e => e.preventDefault()); };
 tb('#bSound', () => { S.sound = !S.sound; saveSettings(); syncToolbar(); Sound.setVolume(); toast(S.sound ? 'Ton an' : 'Ton aus'); focusInput(); });
@@ -1131,7 +1177,8 @@ function boot() {
   if (vv) { vv.addEventListener('resize', onResize); vv.addEventListener('scroll', onResize); }
   if (document.fonts) document.fonts.ready.then(() => { lines = []; layout(); });
   if (!('ontouchstart' in window)) setTimeout(focusInput, 200);
-  else $('#hint').textContent = 'Tippe auf das Blatt und schreib los.';
+  else $('#hint').textContent = 'Tippe aufs Blatt und schreib los. Nach unten wischen: nur noch Schrift.';
+  if (!('ontouchstart' in window)) $('#hint').textContent = 'Tipp einfach los. ⌘/Strg + . blendet alles aus.';
   document.addEventListener('visibilitychange', () => { if (document.hidden) saveNow(); });
   window.addEventListener('pagehide', saveNow);
   window.addEventListener('beforeunload', saveNow);

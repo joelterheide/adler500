@@ -11,7 +11,8 @@ Eine ablenkungsfreie Schreibmaschine im Browser: eine Zeile unter der Lampe, Tas
 - **Offline & als App:** Funktioniert offline (Service Worker) und lässt sich auf dem iPhone über „Zum Home-Bildschirm“ installieren.
 
 ## Bedienung
-- Mausrad / Wischen auf dem Blatt: zurückblättern und lesen (Tippen springt zurück zur Zeile).
+- **Nach unten wischen:** Lampe, Leisten und Wagen blenden aus – nur noch die Schrift. Nach oben wischen holt alles zurück (Desktop: `⌘/Strg + .` bzw. `Esc`).
+- Zurückblättern: Mausrad, Pfeiltasten oder mit zwei Fingern wischen.
 - `⌘/Strg + S` speichern · `⌘/Strg + Enter` abschließen · `Esc` schließt Fenster.
 
 ## Starten
