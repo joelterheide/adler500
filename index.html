@@ -125,6 +125,8 @@ svg.i{fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;strok
 /* ---------- Fokus-Modus: nur die Schrift ---------- */
 #app.focus .lamp,#app.focus .vignette,#app.focus .platen,#app.focus .carriage,#app.focus .statusbar,#app.focus .back-to-line{opacity:0!important;pointer-events:none}
 #app.focus .topbar{opacity:0;transform:translateY(-12px);pointer-events:none}
+#app.focus .sheet-mask{-webkit-mask-image:linear-gradient(to bottom, transparent calc(env(safe-area-inset-top) + 10px), #000 calc(env(safe-area-inset-top) + 90px), #000 calc(100% - 70px), transparent 100%);
+  mask-image:linear-gradient(to bottom, transparent calc(env(safe-area-inset-top) + 10px), #000 calc(env(safe-area-inset-top) + 90px), #000 calc(100% - 70px), transparent 100%)}
 .sheet{transition:color .6s}
 
 /* ---------- Statuszeile ---------- */
@@ -422,6 +424,7 @@ const DEFAULTS = { paper:'velin', font:'courier', machine:'portable', fontSize:2
   sound:true, volume:.7, keys:true, bell:true, ret:true, ambience:'none',
   forwardOnly:false, goal:1000, autoWrap:true };
 const S = Object.assign({}, DEFAULTS, store.get('adler500.settings', {}));
+if (S.ambience === 'surf') S.ambience = 'beach';
 const saveSettings = () => store.set('adler500.settings', S);
 
 const PAPERS = { velin:'Vélin', leinen:'Leinen', schiefer:'Schiefer', nacht:'Nacht' };
@@ -444,7 +447,7 @@ const MACHINES = {
   electric:{ label:'Elektrische', travel:.007, strike:.7, platen:2900, thump:215, body:.55, press:.35,
     ring:[[3250,.03,.03]] }
 };
-const AMBIENCES = { none:'Stille', rain:'Regen am Fenster', fire:'Kaminfeuer', surf:'Brandung' };
+const AMBIENCES = { none:'Stille', forest:'Wald (Vögel)', night:'Sommernacht (Grillen)', beach:'Strand (Wellen & Möwen)', rain:'Regen am Fenster', fire:'Kaminfeuer' };
 
 /* ================= Klang (Web Audio, synthetisiert) ================= */
 const Sound = {
@@ -565,7 +568,7 @@ const Sound = {
   },
   setAmbience() {
     if (!this.ctx) return;
-    if (this.amb) { const a = this.amb; a.g.gain.setTargetAtTime(.0001, this.ctx.currentTime, .4); clearInterval(a.iv); setTimeout(() => a.nodes.forEach(n => { try { n.stop ? n.stop() : 0; n.disconnect(); } catch {} }), 1500); this.amb = null; }
+    if (this.amb) { const a = this.amb; a.stopped = true; a.timers.forEach(clearTimeout); a.g.gain.setTargetAtTime(.0001, this.ctx.currentTime, .4); clearInterval(a.iv); setTimeout(() => a.nodes.forEach(n => { try { n.stop ? n.stop() : 0; n.disconnect(); } catch {} }), 1500); this.amb = null; }
     const kind = S.ambience; if (kind === 'none') return;
     const c = this.ctx, g = c.createGain(); g.gain.value = .0001; g.connect(this.master);
     const nodes = [g];
@@ -576,6 +579,35 @@ const Sound = {
       s.connect(f).connect(gg).connect(g); s.start(c.currentTime, Math.random()); nodes.push(s, f, gg); return gg;
     };
     let iv = null;
+    const amb = { g, nodes, iv:null, timers:[], stopped:false };
+    // wiederkehrendes Ereignis in zufälligen Abständen
+    const every = (min, max, fn, first) => {
+      const go = () => { if (amb.stopped) return; fn(); amb.timers.push(setTimeout(go, (min + Math.random() * (max - min)) * 1000)); };
+      amb.timers.push(setTimeout(go, (first ?? Math.random() * max) * 1000));
+    };
+    // Raum: leichter Nachhall für Entfernung
+    const space = (() => {
+      const d = c.createDelay(1); d.delayTime.value = .13; const fb = c.createGain(); fb.gain.value = .32;
+      const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2600;
+      const wet = c.createGain(); wet.gain.value = .35;
+      d.connect(lp).connect(fb).connect(d); lp.connect(wet).connect(g); nodes.push(d, fb, lp, wet); return d;
+    })();
+    // ein Ton mit Tonhöhenverlauf, Vibrato, Lautstärke und Position im Raum
+    const voice = (t, o) => {
+      const osc = c.createOscillator(); osc.type = o.type || 'sine';
+      osc.frequency.setValueAtTime(o.f[0], t);
+      o.f.slice(1).forEach((f, i, arr) => osc.frequency.linearRampToValueAtTime(f, t + o.dur * (i + 1) / arr.length));
+      if (o.vib) { const lf = c.createOscillator(), lg = c.createGain(); lf.frequency.value = o.vib[0]; lg.gain.value = o.vib[1]; lf.connect(lg).connect(osc.frequency); lf.start(t); lf.stop(t + o.dur + .05); }
+      const env = c.createGain(); env.gain.setValueAtTime(.0001, t);
+      env.gain.linearRampToValueAtTime(o.gain, t + (o.att ?? Math.min(.02, o.dur * .25)));
+      env.gain.setValueAtTime(o.gain, t + o.dur * .6); env.gain.exponentialRampToValueAtTime(.0001, t + o.dur);
+      let out = env;
+      if (o.lp) { const f = c.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = o.lp; env.connect(f); out = f; }
+      const pan = c.createStereoPanner ? c.createStereoPanner() : c.createGain(); if (pan.pan) pan.pan.value = o.pan || 0;
+      osc.connect(env); out.connect(pan); pan.connect(g); pan.connect(space);
+      osc.start(t); osc.stop(t + o.dur + .05);
+    };
+    const rnd = (a, b) => a + Math.random() * (b - a);
     if (kind === 'rain') {
       // tiefes, weiches Grundrauschen statt Zischen, mit langsamen Böen
       const base = loop(this.brown, 'lowpass', 1100, .5, .42);
@@ -597,14 +629,59 @@ const Sound = {
       loop(this.brown, 'lowpass', 380, .8, .6);
       const crack = () => { this.noise(c.currentTime, { freq:1200 + Math.random()*3500, q:2, peak:.05 + Math.random()*.25, dur:.004 + Math.random()*.02, dest:g }); };
       iv = setInterval(() => { if (Math.random() < .35) { crack(); if (Math.random() < .3) setTimeout(crack, 30 + Math.random()*60); } }, 90);
-    } else if (kind === 'surf') {
-      const gg = loop(this.white, 'lowpass', 520, .6, .0);
-      loop(this.brown, 'lowpass', 300, .6, .25);
-      const lfo = c.createOscillator(); lfo.frequency.value = .085; const lg = c.createGain(); lg.gain.value = .2;
-      gg.gain.value = .22; lfo.connect(lg).connect(gg.gain); lfo.start(); nodes.push(lfo, lg);
+    } else if (kind === 'forest') {
+      // Meise: "zi-zi-bä"
+      every(4, 11, () => { const t = c.currentTime + .05, pan = rnd(-.8, .8), gn = rnd(.05, .11), n = 2 + (Math.random() * 3 | 0);
+        for (let i = 0; i < n; i++) { const b = t + i * .32; voice(b, { f:[5400, 5100], dur:.07, gain:gn, pan }); voice(b + .11, { f:[4100, 3700], dur:.14, gain:gn * .9, pan }); } }, 1.5);
+      // Amsel: melodisch, weich
+      every(7, 16, () => { const t = c.currentTime + .05, pan = rnd(-.6, .6), gn = rnd(.05, .09); let b = t;
+        const n = 4 + (Math.random() * 5 | 0); for (let i = 0; i < n; i++) { const d = rnd(.12, .32), f = rnd(1700, 3100);
+          voice(b, { f:[f, f * rnd(.85, 1.25), f * rnd(.9, 1.1)], dur:d, gain:gn, pan, vib:[rnd(18, 32), rnd(40, 120)] }); b += d + rnd(.02, .12); } }, 3);
+      // Buchfink: schneller Triller mit Schnörkel
+      every(9, 20, () => { const t = c.currentTime + .05, pan = rnd(-.9, .9), gn = rnd(.04, .08), n = 9 + (Math.random() * 6 | 0);
+        for (let i = 0; i < n; i++) { const f = 4600 - i * 120; voice(t + i * .055, { f:[f, f - 400], dur:.045, gain:gn, pan }); }
+        voice(t + n * .055 + .03, { f:[3000, 4200, 2600], dur:.28, gain:gn, pan }); }, 6);
+      // Kuckuck in der Ferne
+      every(30, 60, () => { const t = c.currentTime + .05, pan = rnd(-.5, .5), n = 2 + (Math.random() * 3 | 0);
+        for (let i = 0; i < n; i++) { voice(t + i * .9, { f:[720, 700], dur:.28, gain:.06, pan, lp:1500, att:.04 }); voice(t + i * .9 + .32, { f:[590, 570], dur:.38, gain:.055, pan, lp:1500, att:.04 }); } }, 14);
+      // Specht ab und zu
+      every(40, 80, () => { const t = c.currentTime, pan = rnd(-.7, .7);
+        for (let i = 0; i < 14; i++) voice(t + i * .055, { f:[900, 500], dur:.025, gain:.05, pan, type:'triangle', lp:2200, att:.001 }); }, 25);
+    } else if (kind === 'night') {
+      // drei Grillen mit eigenem Rhythmus
+      [[4650, .52, -.6, .05], [4380, .61, .5, .04], [4920, .47, .1, .03]].forEach(([f, per, pan, gn]) => {
+        const chirp = () => { if (amb.stopped) return; const t = c.currentTime + .02;
+          for (let i = 0; i < 4; i++) voice(t + i * .028, { f:[f, f * 1.01], dur:.018, gain:gn, pan, att:.003 });
+          amb.timers.push(setTimeout(chirp, per * rnd(.92, 1.08) * 1000)); };
+        amb.timers.push(setTimeout(chirp, Math.random() * 800));
+      });
+      // Eule in der Ferne: "huu – hu-huuu"
+      every(25, 50, () => { const t = c.currentTime + .05, pan = rnd(-.6, .6);
+        voice(t, { f:[410, 400, 380], dur:.7, gain:.07, pan, lp:900, att:.08 });
+        voice(t + 1.1, { f:[400, 390], dur:.22, gain:.05, pan, lp:900, att:.03 });
+        voice(t + 1.4, { f:[405, 395, 370], dur:.9, gain:.065, pan, lp:900, att:.1 }); }, 8);
+    } else if (kind === 'beach') {
+      // Wellen: anrollen, brechen, auslaufen – mit Stille dazwischen
+      const wave = () => { const t = c.currentTime + .05, up = rnd(2, 3.2), down = rnd(3.5, 5.5), peak = rnd(.28, .45);
+        const s = c.createBufferSource(); s.buffer = this.brown; s.loop = true;
+        const f = c.createBiquadFilter(); f.type = 'lowpass'; f.Q.value = .4;
+        f.frequency.setValueAtTime(180, t); f.frequency.exponentialRampToValueAtTime(rnd(1100, 1600), t + up); f.frequency.exponentialRampToValueAtTime(260, t + up + down);
+        const gg = c.createGain(); gg.gain.setValueAtTime(.0001, t); gg.gain.exponentialRampToValueAtTime(peak, t + up); gg.gain.exponentialRampToValueAtTime(.0001, t + up + down);
+        const pan = c.createStereoPanner ? c.createStereoPanner() : c.createGain(); if (pan.pan) pan.pan.value = rnd(-.4, .4);
+        s.connect(f).connect(gg).connect(pan).connect(g); s.start(t, Math.random()); s.stop(t + up + down + .1);
+        // Gischt beim Auslaufen
+        const s2 = c.createBufferSource(); s2.buffer = this.white; const f2 = c.createBiquadFilter(); f2.type = 'bandpass'; f2.frequency.value = 2400; f2.Q.value = .6;
+        const g2 = c.createGain(); g2.gain.setValueAtTime(.0001, t + up * .9); g2.gain.exponentialRampToValueAtTime(peak * .08, t + up + .3); g2.gain.exponentialRampToValueAtTime(.0001, t + up + down * .8);
+        s2.connect(f2).connect(g2).connect(g); s2.start(t + up * .9, Math.random()); s2.stop(t + up + down);
+      };
+      every(7, 11, wave, .2);
+      // Möwen
+      every(10, 25, () => { const t = c.currentTime + .05, pan = rnd(-.9, .9), n = 2 + (Math.random() * 3 | 0), gn = rnd(.035, .06);
+        for (let i = 0; i < n; i++) voice(t + i * rnd(.32, .45), { f:[1150, 1750, 1500, 950], dur:rnd(.25, .38), gain:gn, pan, type:'sawtooth', lp:2400, vib:[rnd(25, 40), 60] }); }, 4);
     }
     g.gain.setTargetAtTime(.55, c.currentTime, .8);
-    this.amb = { g, nodes, iv };
+    amb.iv = iv;
+    this.amb = amb;
   }
 };
 
@@ -859,33 +936,51 @@ function scrollLines(n) {
 }
 let wheelAcc = 0;
 stage.addEventListener('wheel', e => { e.preventDefault(); wheelAcc += e.deltaY; const step = L.lh; while (Math.abs(wheelAcc) >= step) { scrollLines(wheelAcc < 0 ? 1 : -1); wheelAcc -= Math.sign(wheelAcc) * step; } }, { passive:false });
-let t0 = null, twoFinger = false, touchY = null, touchAcc = 0;
+// Ein Finger: normal nach unten wischen = ausblenden. Im Ausblend-Modus scrollt man mit einem Finger durch den Text;
+// ganz unten angekommen holt nach oben wischen alles zurück. Zwei Finger scrollen immer.
+let t0 = null, tMode = null, startScroll = 0, lastMove = null, vel = 0, momentum = 0;
+const isFocus = () => app.classList.contains('focus');
+function setScroll(v, mode) { scrollBack = clamp(v, 0, Math.max(0, lines.length - 1)); render(mode !== 'glide', mode); }
+function stopMomentum() { cancelAnimationFrame(momentum); momentum = 0; }
 stage.addEventListener('touchstart', e => {
-  Sound.init();
-  const t = e.touches[0]; twoFinger = e.touches.length > 1;
-  if (!twoFinger) t0 = { x:t.clientX, y:t.clientY, time:Date.now() };
-  touchY = t.clientY; touchAcc = 0;
+  Sound.init(); stopMomentum();
+  const t = e.touches[0];
+  t0 = { x:t.clientX, y:t.clientY }; startScroll = scrollBack; lastMove = { y:t.clientY, time:performance.now() }; vel = 0;
+  tMode = e.touches.length > 1 ? 'scroll' : null;
 }, { passive:true });
 stage.addEventListener('touchmove', e => {
-  e.preventDefault();
-  if (e.touches.length > 1) twoFinger = true;
-  if (!twoFinger) return;
-  const y = e.touches[0].clientY; touchAcc += y - touchY; touchY = y;
-  while (Math.abs(touchAcc) >= L.lh * .8) { scrollLines(touchAcc > 0 ? 1 : -1); touchAcc -= Math.sign(touchAcc) * L.lh * .8; }
+  e.preventDefault(); if (!t0) return;
+  const t = e.touches[0], dx = t.clientX - t0.x, dy = t.clientY - t0.y;
+  if (e.touches.length > 1) tMode = 'scroll';
+  if (!tMode && (Math.abs(dy) > 8 || Math.abs(dx) > 8)) tMode = isFocus() ? 'scroll' : 'swipe';
+  if (tMode === 'scroll') {
+    const now = performance.now(), dt = now - lastMove.time;
+    if (dt > 0) vel = .8 * ((t.clientY - lastMove.y) / dt) + .2 * vel;
+    lastMove = { y:t.clientY, time:now };
+    setScroll(startScroll + dy / L.lh);
+  }
 }, { passive:false });
 stage.addEventListener('touchend', e => {
-  if (e.touches.length) return;
-  if (!twoFinger && t0) {
-    const t = e.changedTouches[0], dx = t.clientX - t0.x, dy = t.clientY - t0.y;
-    if (Math.abs(dy) > 45 && Math.abs(dy) > Math.abs(dx) * 1.3) setFocus(dy > 0);
-    else if (Math.abs(dx) < 10 && Math.abs(dy) < 10) focusInput();
-  }
-  t0 = null; twoFinger = false;
+  if (e.touches.length || !t0) return;
+  const t = e.changedTouches[0], dx = t.clientX - t0.x, dy = t.clientY - t0.y;
+  if (tMode === 'swipe') { if (dy > 45 && Math.abs(dy) > Math.abs(dx) * 1.3) setFocus(true); }
+  else if (tMode === 'scroll') {
+    if (isFocus() && startScroll === 0 && scrollBack === 0 && dy < -45) setFocus(false);
+    else if (Math.abs(vel) > .15) {
+      let last = performance.now();
+      const step = now => { const dt = now - last; last = now; vel *= Math.pow(.94, dt / 16);
+        const before = scrollBack; setScroll(scrollBack + vel * dt / L.lh);
+        if (Math.abs(vel) > .02 && scrollBack !== before) momentum = requestAnimationFrame(step); else momentum = 0; };
+      momentum = requestAnimationFrame(step);
+    }
+  } else if (Math.abs(dx) < 10 && Math.abs(dy) < 10) focusInput();
+  t0 = null; tMode = null;
 });
 function setFocus(on) {
   if (app.classList.contains('focus') === on) return;
   app.classList.toggle('focus', on);
-  if (on && !store.get('adler500.focusHint', false)) { toast('Nach oben wischen blendet alles wieder ein'); store.set('adler500.focusHint', true); }
+  if (!on && scrollBack) setScroll(0, 'glide');
+  if (on && !store.get('adler500.focusHint', false)) { toast('Wischen scrollt durch den Text – unten nach oben wischen holt alles zurück'); store.set('adler500.focusHint', true); }
 }
 stage.addEventListener('mousedown', e => { e.preventDefault(); Sound.init(); focusInput(); });
 $('#backToLine').addEventListener('click', e => { e.stopPropagation(); scrollBack = 0; render(false, 'glide'); focusInput(); });
