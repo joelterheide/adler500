@@ -35,7 +35,7 @@
 html,body{margin:0;height:100%;overflow:hidden;background:var(--desk);color:var(--ink);font-family:var(--ui);-webkit-font-smoothing:antialiased;overscroll-behavior:none}
 body{position:fixed;inset:0;touch-action:manipulation}
 button{font:inherit;color:inherit;cursor:pointer}
-#app{position:fixed;left:0;right:0;top:0;height:var(--vvh,100%);overflow:hidden;background:var(--desk);transition:background .5s}
+#app{position:fixed;inset:0;overflow:hidden;background:var(--desk);transition:background .5s}
 
 /* ---------- Lampe ---------- */
 .lamp{position:absolute;left:-100vw;width:200vw;top:0;height:calc(var(--typing-y) + 1.75*var(--fs) - 10.5px);pointer-events:none;mix-blend-mode:screen;
@@ -110,9 +110,9 @@ svg.i{fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;strok
 .carriage .pill i{width:8px;height:8px;border-radius:50%;background:#4b4642;transition:background .5s}
 .carriage .pill i.on{background:#e4a748;box-shadow:0 0 4px rgba(228,167,72,.6)}
 .carriage .tbar{position:absolute;left:calc(var(--cw)*.5px - .43*var(--fs));top:calc(-12.5px - 1.05*var(--fs));width:calc(.86*var(--fs));height:calc(1.05*var(--fs));transform-origin:50% 100%}
-.carriage .cur{position:absolute;left:-1px;top:calc(-2px - 4.155*var(--fs));width:2px;height:calc(.98*var(--fs));border-radius:1px;background:#d9787a;animation:blink 1.1s steps(1) infinite}
-.typing .carriage .cur{animation:none}
-@keyframes blink{50%{opacity:0}}
+.carriage .cur{position:absolute;left:-1px;top:calc(-2px - 4.155*var(--fs));width:2px;height:calc(.98*var(--fs));border-radius:1px;background:#d9787a;animation:blink 1.2s ease-in-out infinite}
+.typing .carriage .cur{animation:none;opacity:1}
+@keyframes blink{0%,45%{opacity:1}55%,95%{opacity:0}100%{opacity:1}}
 .carriage .tbar::before{content:"";position:absolute;left:0;right:0;top:0;height:max(3px,calc(.17*var(--fs)));background:var(--ink);border-radius:1px}
 .carriage .tbar::after{content:"";position:absolute;left:50%;top:0;bottom:0;width:max(3px,calc(.17*var(--fs)));transform:translateX(-50%);background:var(--ink)}
 .carriage .tbar.strike{animation:strike .12s ease-out}
@@ -128,7 +128,7 @@ svg.i{fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;strok
 .sheet{transition:color .6s}
 
 /* ---------- Statuszeile ---------- */
-.statusbar{position:absolute;left:0;right:0;bottom:0;z-index:10;transition:opacity .6s;display:flex;align-items:flex-end;justify-content:space-between;gap:12px;
+.statusbar{position:absolute;left:0;right:0;bottom:var(--kb,0px);z-index:10;transition:opacity .6s;display:flex;align-items:flex-end;justify-content:space-between;gap:12px;
   padding:10px max(20px,env(safe-area-inset-right)) calc(env(safe-area-inset-bottom) + 16px) max(20px,env(safe-area-inset-left));font-size:14px;color:var(--ink-soft);pointer-events:none;font-variant-numeric:tabular-nums}
 [data-paper="velin"] .statusbar,[data-paper="schiefer"] .statusbar{color:rgba(243,237,228,.78)}
 .statusbar .left{display:flex;gap:14px;white-space:nowrap}
@@ -138,7 +138,7 @@ svg.i{fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;strok
 .save-dot{width:7px;height:7px;border-radius:50%;background:currentColor;opacity:.5;display:inline-block;margin-right:6px;transition:.3s}
 .save-dot.dirty{background:var(--amber);opacity:1}
 
-textarea#input{position:fixed;left:0;top:0;width:2px;height:2px;opacity:0;border:0;padding:0;resize:none;font-size:16px;color:transparent;background:transparent;caret-color:transparent;z-index:1;pointer-events:none}
+textarea#input{position:fixed;left:0;top:0;width:1px;height:1px;opacity:0;-webkit-text-fill-color:transparent;clip-path:inset(50%);border:0;padding:0;resize:none;font-size:16px;color:transparent;background:transparent;caret-color:transparent;z-index:1;pointer-events:none}
 
 /* ---------- Overlays allgemein ---------- */
 .scrim{position:fixed;inset:0;z-index:50;background:rgba(20,17,15,.38);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);opacity:0;pointer-events:none;transition:opacity .3s}
@@ -435,10 +435,14 @@ const FONTS = {
   anon:{ label:'Anonymous Pro', css:"'Anonymous Pro','Courier New',monospace" },
   system:{ label:'Courier (System)', css:"'Courier New',Courier,monospace" }
 };
+// travel: Zeit vom Tastendruck bis der Typenhebel auf die Walze schlägt · ring: metallisches Nachklingen [Hz, Lautstärke, Dauer]
 const MACHINES = {
-  portable:{ label:'Reisemaschine', click:3200, q:1.3, clickGain:.55, clickDur:.03, thump:150, thumpGain:.32, thumpDur:.05, rebound:.045 },
-  office:{ label:'Büromaschine', click:2100, q:1.0, clickGain:.6, clickDur:.045, thump:105, thumpGain:.5, thumpDur:.08, rebound:.06 },
-  electric:{ label:'Elektrische', click:4600, q:2.2, clickGain:.3, clickDur:.018, thump:220, thumpGain:.22, thumpDur:.035, rebound:0 }
+  portable:{ label:'Reisemaschine', travel:.017, strike:1, platen:2300, thump:175, body:.8, press:1,
+    ring:[[2650,.07,.05],[4150,.04,.035],[6350,.022,.02]] },
+  office:{ label:'Büromaschine', travel:.024, strike:1.15, platen:1550, thump:118, body:1.15, press:1.25,
+    ring:[[1950,.06,.075],[3080,.035,.055],[4820,.018,.03]] },
+  electric:{ label:'Elektrische', travel:.007, strike:.7, platen:2900, thump:215, body:.55, press:.35,
+    ring:[[3250,.03,.03]] }
 };
 const AMBIENCES = { none:'Stille', rain:'Regen am Fenster', fire:'Kaminfeuer', surf:'Brandung' };
 
@@ -497,15 +501,28 @@ const Sound = {
   },
   key(kind) {
     if (!this.ok('keys')) return;
-    const t = this.ctx.currentTime + .002, m = MACHINES[S.machine], v = .86 + Math.random() * .28;
+    const t = this.ctx.currentTime + .003, m = MACHINES[S.machine], v = .92 + Math.random() * .16;
+    // 1) Taste geht runter
+    this.noise(t, { freq:1100 * v, q:.9, peak:.1 * m.press, dur:.012, a:.0008 });
     if (kind === 'space') {
-      this.noise(t, { freq:m.click*.45, q:.8, peak:m.clickGain*.7, dur:m.clickDur*1.6 });
-      this.tone(t, { freq:m.thump*.75, to:m.thump*.4, peak:m.thumpGain*1.3, dur:m.thumpDur*1.5 });
+      // Leertaste: dumpfes Klappern + Schaltwerk, kein Typenhebel
+      this.noise(t, { type:'lowpass', freq:850, q:.7, peak:.38 * m.press, dur:.05, a:.001 });
+      this.tone(t, { freq:92 * v, to:58, peak:.32 * m.body, dur:.07, a:.001 });
+      this.escape(t + .03, v);
       return;
     }
-    this.noise(t, { freq:m.click*v, q:m.q, peak:m.clickGain*v, dur:m.clickDur });
-    this.tone(t, { freq:m.thump*v, to:m.thump*.5, peak:m.thumpGain, dur:m.thumpDur });
-    if (m.rebound) this.noise(t + m.rebound * v, { freq:m.click*1.5, q:2, peak:m.clickGain*.18, dur:.012 });
+    // 2) Typenhebel trifft Walze: harter Anschlag
+    const s = t + m.travel * (.85 + Math.random() * .3);
+    this.noise(s, { type:'highpass', freq:1000, q:.5, peak:.95 * m.strike * v, dur:.0035, a:.0004 });
+    this.noise(s, { freq:m.platen * v, q:1.3, peak:.5 * m.strike, dur:.028, a:.0006 });
+    this.tone(s, { freq:m.thump * v, to:m.thump * .55, peak:.36 * m.body, dur:.065, a:.0008 });
+    m.ring.forEach(([f, g, d]) => this.tone(s, { freq:f * v, peak:g * m.strike, dur:d, a:.0006 }));
+    // 3) Wagen rückt einen Schritt weiter
+    this.escape(s + .02, v);
+  },
+  escape(t, v) {
+    this.noise(t, { freq:4300 * v, q:3, peak:.11, dur:.005, a:.0004 });
+    this.noise(t + .011, { freq:2900 * v, q:3, peak:.07, dur:.005, a:.0004 });
   },
   back() {
     if (!this.ok('keys')) return;
@@ -529,13 +546,22 @@ const Sound = {
   carriage() {
     if (!this.ok('ret')) return;
     const c = this.ctx, t = c.currentTime + .01;
-    for (let i = 0; i < 9; i++) this.noise(t + i * (.03 - i * .0015), { freq:2700 + Math.random()*400, q:5, peak:.16, dur:.01 });
+    // Zeilenschaltung: Ratsche
+    for (let i = 0; i < 3; i++) this.noise(t + i * .028, { freq:2500 + Math.random() * 500, q:4, peak:.22, dur:.009, a:.0005 });
+    this.tone(t + .06, { freq:140, to:90, peak:.2, dur:.05 });
+    // Wagen gleitet zurück
+    const st = t + .1, len = .3;
     const s = c.createBufferSource(); s.buffer = this.white;
-    const f = c.createBiquadFilter(); f.type = 'lowpass'; f.frequency.setValueAtTime(1400, t); f.frequency.exponentialRampToValueAtTime(380, t + .34);
-    const g = c.createGain(); g.gain.setValueAtTime(.0001, t); g.gain.linearRampToValueAtTime(.16, t + .05); g.gain.linearRampToValueAtTime(.0001, t + .34);
-    s.connect(f).connect(g).connect(this.master); s.start(t); s.stop(t + .4);
-    this.tone(t + .34, { freq:95, to:48, peak:.6, dur:.14 });
-    this.noise(t + .34, { freq:900, q:1, peak:.35, dur:.06 });
+    const f = c.createBiquadFilter(); f.type = 'bandpass'; f.Q.value = .8; f.frequency.setValueAtTime(1600, st); f.frequency.exponentialRampToValueAtTime(700, st + len);
+    const g = c.createGain(); g.gain.setValueAtTime(.0001, st); g.gain.linearRampToValueAtTime(.13, st + .06); g.gain.linearRampToValueAtTime(.08, st + len - .04); g.gain.linearRampToValueAtTime(.0001, st + len);
+    s.connect(f).connect(g).connect(this.master); s.start(st, Math.random()); s.stop(st + len + .05);
+    for (let i = 0; i < 10; i++) this.noise(st + i * (len / 10) + Math.random() * .01, { freq:3200 + Math.random() * 1500, q:5, peak:.035, dur:.004 });
+    // Anschlag am Rand
+    const e = st + len;
+    this.noise(e, { type:'highpass', freq:700, q:.5, peak:.6, dur:.006, a:.0004 });
+    this.tone(e, { freq:105, to:55, peak:.6, dur:.13, a:.001 });
+    this.tone(e, { freq:1820, peak:.05, dur:.12, a:.0008 });
+    this.tone(e, { freq:2960, peak:.03, dur:.08, a:.0008 });
   },
   setAmbience() {
     if (!this.ctx) return;
@@ -551,8 +577,22 @@ const Sound = {
     };
     let iv = null;
     if (kind === 'rain') {
-      loop(this.white, 'bandpass', 2600, .4, .11); loop(this.brown, 'lowpass', 600, .7, .25);
-      iv = setInterval(() => { if (Math.random() < .7) this.noise(c.currentTime, { freq:3000 + Math.random()*4000, q:6, peak:.02 + Math.random()*.04, dur:.008, dest:g }); }, 45);
+      // tiefes, weiches Grundrauschen statt Zischen, mit langsamen Böen
+      const base = loop(this.brown, 'lowpass', 1100, .5, .42);
+      loop(this.white, 'bandpass', 900, .4, .018);
+      const lfo = c.createOscillator(); lfo.frequency.value = .045; const lg = c.createGain(); lg.gain.value = .14;
+      lfo.connect(lg).connect(base.gain); lfo.start(); nodes.push(lfo, lg);
+      // einzelne Tropfen: kurze Prasselgeräusche, ab und zu ein "Plopp"
+      const drop = () => {
+        const t = c.currentTime + Math.random() * .04, big = Math.random() < .1;
+        this.noise(t, { freq:1600 + Math.random() * 5200, q:2 + Math.random() * 4, peak:big ? .055 : .01 + Math.random() * .03, dur:.003 + Math.random() * .01, a:.0005, dest:g });
+        if (big) {
+          const o = c.createOscillator(), gg = c.createGain(), f = 650 + Math.random() * 1700;
+          o.frequency.setValueAtTime(f, t); o.frequency.exponentialRampToValueAtTime(f * 1.7, t + .022);
+          this.env(gg, t, .001, .012 + Math.random() * .025, .028); o.connect(gg).connect(g); o.start(t); o.stop(t + .07);
+        }
+      };
+      iv = setInterval(() => { const n = 1 + Math.floor(Math.random() * 5); for (let i = 0; i < n; i++) drop(); }, 40);
     } else if (kind === 'fire') {
       loop(this.brown, 'lowpass', 380, .8, .6);
       const crack = () => { this.noise(c.currentTime, { freq:1200 + Math.random()*3500, q:2, peak:.05 + Math.random()*.25, dur:.004 + Math.random()*.02, dest:g }); };
@@ -606,8 +646,9 @@ const measure = document.createElement('canvas').getContext('2d');
 function layout() {
   const vv = window.visualViewport;
   L.vw = window.innerWidth; L.vh = vv ? vv.height : window.innerHeight;
-  app.style.setProperty('--vvh', L.vh + 'px');
-  app.style.top = (vv ? vv.offsetTop : 0) + 'px';
+  const vTop = vv ? vv.offsetTop : 0;
+  document.documentElement.style.setProperty('--vvh', L.vh + 'px');
+  app.style.setProperty('--kb', Math.max(0, window.innerHeight - L.vh - vTop) + 'px');
   let fs = S.fontSize;
   if (L.vw < 600) fs = Math.min(fs, 17);
   const fam = FONTS[S.font].css;
@@ -624,7 +665,7 @@ function layout() {
   L.cols = Math.max(20, Math.min(S.cols, Math.floor(avail / cw)));
   L.left = Math.round((L.vw - L.cols * cw) / 2);
   const top = 70, bottom = 56;
-  L.typingY = Math.round(top + (L.vh - top - bottom) * (L.vh < 520 ? .62 : .55));
+  L.typingY = Math.round(vTop + top + (L.vh - top - bottom) * (L.vh < 520 ? .62 : .55));
   const st = app.style;
   st.setProperty('--fs', fs + 'px'); st.setProperty('--lh', L.lh + 'px'); st.setProperty('--typing-y', L.typingY + 'px');
   st.setProperty('--left', L.left + 'px'); st.setProperty('--colw', Math.ceil(L.cols * cw + cw) + 'px'); st.setProperty('--cw', cw);
@@ -687,8 +728,11 @@ function render(instant, mode) {
   placeInput();
 }
 
+let inputPos = '';
 function placeInput() {
-  input.style.transform = `translate(${Math.min(L.vw - 4, L.left + (lines.length ? lines[lines.length-1].t.length : 0) * L.cw)}px, ${L.typingY - 20}px)`;
+  // Feld steht still (nicht bei jedem Anschlag verschieben) – sonst flackert der System-Cursor auf dem iPad
+  const pos = `translate(${L.left}px, ${L.typingY - 20}px)`;
+  if (pos !== inputPos) { input.style.transform = pos; inputPos = pos; }
 }
 
 /* ================= Status ================= */
@@ -753,16 +797,18 @@ function applyText(v) {
   if (removed) Sound.back();
   else {
     const chunk = v.slice(old.length);
-    if (nl.length > oldLines) { if (chunk.length <= 2 && chunk.trim() && !chunk.includes('\n')) Sound.key(); Sound.carriage(); }
+    if (nl.length > oldLines) {
+      if (chunk.trim() && !chunk.includes('\n')) Sound.key();
+      Sound.bell(); setTimeout(() => Sound.carriage(), 160);
+    }
     else if (chunk === ' ') Sound.key('space');
     else Sound.key();
-    if (nl.length === oldLines && oldCol < L.cols - 8 && newCol >= L.cols - 8) Sound.bell();
   }
   const tbar = $('#tbar'); tbar.classList.remove('strike'); void tbar.offsetWidth; if (!removed) tbar.classList.add('strike');
   app.classList.add('typing'); clearTimeout(typingTimer); typingTimer = setTimeout(() => app.classList.remove('typing'), 700);
   markDirty();
 }
-function caretEnd() { const n = input.value.length; try { input.setSelectionRange(n, n); } catch {} }
+function caretEnd() { const n = input.value.length; if (input.selectionStart === n && input.selectionEnd === n) return; try { input.setSelectionRange(n, n); } catch {} }
 let flashT = 0;
 function lockedFeedback() {
   Sound.locked();
@@ -798,7 +844,7 @@ input.addEventListener('keydown', e => {
   }
   if (mod && (k === 'a' || k === 'A')) { e.preventDefault(); return; }
 });
-['select','click','focus','keyup'].forEach(ev => input.addEventListener(ev, () => setTimeout(caretEnd, 0)));
+['select','click','focus'].forEach(ev => input.addEventListener(ev, () => setTimeout(caretEnd, 0)));
 document.addEventListener('selectionchange', () => { if (document.activeElement === input && !composing) { const n = input.value.length; if (input.selectionStart !== n || input.selectionEnd !== n) caretEnd(); } });
 
 const anyOverlay = () => document.querySelector('.modal.open, .archive.open, .reader.open');
@@ -869,7 +915,7 @@ function syncToolbar() {
   $('#lockChip').classList.toggle('show', S.forwardOnly);
 }
 function applyLook() {
-  app.dataset.paper = S.paper;
+  app.dataset.paper = S.paper; document.documentElement.dataset.paper = S.paper;
   document.querySelector('meta[name=theme-color]').content = getComputedStyle(app).getPropertyValue('--desk').trim() || '#7f7772';
   const cool = [214, 232, 255], warm = [255, 206, 140];
   const c = cool.map((v, i) => Math.round(v + (warm[i] - v) * S.warmth));
@@ -921,7 +967,7 @@ const SETTINGS_TABS = {
     { k:'sound', type:'toggle', label:'Ton', desc:'Alle Klänge an oder aus. (iPhone: Stummschalter beachten.)' },
     { k:'volume', type:'range', label:'Lautstärke', min:0, max:1, step:.01 },
     { k:'keys', type:'toggle', label:'Tastenanschlag' },
-    { k:'bell', type:'toggle', label:'Glocke', desc:'Klingelt acht Zeichen vor dem Rand.' },
+    { k:'bell', type:'toggle', label:'Glocke', desc:'Klingelt beim Zeilenumbruch.' },
     { k:'ret', type:'toggle', label:'Wagenrücklauf' },
     { k:'ambience', type:'select', label:'Atmosphäre', opts:AMBIENCES }
   ],
