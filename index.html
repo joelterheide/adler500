@@ -80,8 +80,9 @@ svg.i{fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;strok
           mask-image:linear-gradient(to bottom, transparent calc(env(safe-area-inset-top) + 58px), rgba(0,0,0,.22) calc(var(--typing-y) - 9*var(--lh)), rgba(0,0,0,.75) calc(var(--typing-y) - 2.5*var(--lh)), #000 calc(var(--typing-y) - var(--lh)), #000 calc(var(--typing-y) + 1px), rgba(0,0,0,.5) calc(var(--typing-y) + 2px), rgba(0,0,0,.35) 100%)}
 .sheet{position:absolute;left:0;top:0;width:var(--colw);font-family:var(--typeface);font-size:var(--fs);line-height:var(--lh);color:var(--ink);
   will-change:transform;white-space:pre;font-variant-ligatures:none;user-select:none}
-.sheet.feed{transition:transform .34s cubic-bezier(.25,.8,.25,1)}
+.sheet.feed{transition:transform .36s cubic-bezier(.3,.9,.25,1)}
 .sheet.glide{transition:transform .5s cubic-bezier(.2,.8,.2,1)}
+.sheet.step{transition:transform .07s linear}
 .ln{height:var(--lh);text-shadow:0 0 .6px currentColor}
 .ln.para{}
 .platen{position:absolute;left:0;right:0;height:5px;top:calc(var(--typing-y) + 6px);background:linear-gradient(to bottom,#3a3430,var(--platen) 45%,#2a2522);
@@ -99,7 +100,7 @@ svg.i{fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;strok
 .carriage .tbar::after{content:"";position:absolute;left:50%;top:0;bottom:0;width:max(3px,calc(.15*var(--fs)));transform:translateX(-50%);background:var(--ink)}
 .carriage .tbar.strike{animation:strike .12s ease-out}
 @keyframes strike{40%{transform:translateY(-3px) scaleY(.88)}}
-.hint{position:absolute;left:var(--left);top:calc(var(--typing-y) + 40px);font-family:var(--serif);font-style:italic;font-size:17px;color:var(--ink-soft);pointer-events:none;transition:opacity .5s;max-width:calc(100vw - 32px)}
+.hint{position:absolute;left:var(--hint-x,var(--left));top:calc(var(--typing-y) + 40px);font-family:var(--serif);font-style:italic;font-size:17px;color:var(--ink-soft);pointer-events:none;transition:opacity .5s;max-width:calc(100vw - 32px)}
 [data-paper="velin"] .hint,[data-paper="schiefer"] .hint{color:rgba(243,237,228,.8)}
 .locked-flash .platen{animation:shake .28s}
 @keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
@@ -405,7 +406,7 @@ const ICON = {
 const DEFAULTS = { paper:'velin', font:'courier', machine:'portable', fontSize:20, cols:62,
   warmth:.62, brightness:.8, halo:.55,
   sound:true, volume:.7, keys:true, bell:true, ret:true, ambience:'none',
-  forwardOnly:false, goal:1000, autoWrap:true };
+  forwardOnly:false, goal:1000, autoWrap:true, carriage:'center' };
 const S = Object.assign({}, DEFAULTS, store.get('adler500.settings', {}));
 const saveSettings = () => store.set('adler500.settings', S);
 
@@ -571,6 +572,11 @@ function layout() {
   let cw = cwAt(fs);
   const avail = L.vw - 2 * Math.max(18, L.vw * .06);
   while (Math.floor(avail / cw) < 30 && fs > 13) { fs--; cw = cwAt(fs); }
+  const probe = document.createElement('span');
+  probe.textContent = 'M'.repeat(50);
+  probe.style.cssText = `position:absolute;left:-9999px;top:0;visibility:hidden;white-space:pre;font-variant-ligatures:none;font-family:${fam};font-size:${fs}px`;
+  document.body.appendChild(probe); const real = probe.getBoundingClientRect().width / 50; probe.remove();
+  if (real > 0) cw = real;
   L.fs = fs; L.cw = cw; L.lh = Math.round(fs * 1.75);
   L.cols = Math.max(20, Math.min(S.cols, Math.floor(avail / cw)));
   L.left = Math.round((L.vw - L.cols * cw) / 2);
@@ -620,25 +626,30 @@ function render(instant, mode) {
   const last = lines.length - 1;
   scrollBack = clamp(scrollBack, 0, last);
   const y = L.typingY - L.lh - (last - scrollBack) * L.lh;
+  const col = Math.min(lines[last].t.length, L.cols);
+  const centered = S.carriage === 'center';
+  const sheetX = centered ? Math.round(L.vw / 2 - (col + .5) * L.cw) : L.left;
+  const caretX = centered ? L.vw / 2 - L.cw / 2 : L.left + col * L.cw;
   sheet.classList.toggle('feed', mode === 'feed');
   sheet.classList.toggle('glide', mode === 'glide');
-  if (instant) { sheet.classList.remove('feed', 'glide'); carriage.classList.remove('ret', 'step'); lampEl.classList.remove('ret', 'step'); }
-  sheet.style.transform = `translate3d(${L.left}px, ${y}px, 0)`;
-  const col = Math.min(lines[last].t.length, L.cols);
+  sheet.classList.toggle('step', mode === 'step' && centered);
+  if (instant) { sheet.classList.remove('feed', 'glide', 'step'); carriage.classList.remove('ret', 'step'); lampEl.classList.remove('ret', 'step'); }
+  sheet.style.transform = `translate3d(${sheetX}px, ${y}px, 0)`;
   carriage.classList.toggle('ret', mode === 'feed');
   carriage.classList.toggle('step', mode === 'step');
   lampEl.classList.toggle('ret', mode === 'feed');
   lampEl.classList.toggle('step', mode === 'step');
-  app.style.setProperty('--caret-x', (L.left + col * L.cw) + 'px');
+  app.style.setProperty('--caret-x', caretX + 'px');
   carriage.style.opacity = scrollBack ? .25 : '';
   $('#backToLine').classList.toggle('show', scrollBack > 1);
   $('#hint').style.opacity = doc.text.length ? 0 : 1;
+  const hint = $('#hint'); hint.style.left = centered ? '50%' : ''; hint.style.transform = centered ? 'translateX(-50%)' : ''; hint.style.textAlign = centered ? 'center' : '';
   updateStatus();
   placeInput();
 }
 
 function placeInput() {
-  input.style.transform = `translate(${Math.min(L.vw - 4, L.left + (lines.length ? lines[lines.length-1].t.length : 0) * L.cw)}px, ${L.typingY - 20}px)`;
+  input.style.transform = `translate(${Math.round(L.vw / 2)}px, ${L.typingY - 20}px)`;
 }
 
 /* ================= Status ================= */
@@ -859,6 +870,7 @@ const SETTINGS_TABS = {
     { k:'paper', type:'select', label:'Papier', desc:'Warmgrau, hell, blaugrau oder dunkel.', opts:PAPERS },
     { k:'font', type:'select', label:'Schrift', desc:'Drei echte Typenschriften.', opts:Object.fromEntries(Object.entries(FONTS).map(([k,v]) => [k, v.label])) },
     { k:'machine', type:'select', label:'Maschine', desc:'Verändert den Klang der Tasten und des Wagens.', opts:Object.fromEntries(Object.entries(MACHINES).map(([k,v]) => [k, v.label])) },
+    { k:'carriage', type:'select', label:'Wagen', desc:'Mitte fix: Lampe und T bleiben mittig, das Blatt läuft durch.', opts:{ center:'Mitte fix', follow:'Kopf wandert' } },
     { k:'fontSize', type:'range', label:'Schriftgröße', desc:'Auf dem Handy wird automatisch verkleinert.', min:14, max:28, step:1 },
     { k:'cols', type:'range', label:'Zeilenbreite', desc:'Anschläge pro Zeile, wie der Randsteller.', min:40, max:80, step:1 }
   ],
@@ -905,7 +917,7 @@ function renderSettings() {
       if (el.type === 'range' || k === 'goal') v = Number(v);
       S[k] = v; saveSettings(); paint();
       if (['paper','warmth','brightness','halo'].includes(k)) applyLook();
-      if (['font','fontSize','cols','autoWrap'].includes(k)) { lines = []; layout(); }
+      if (['font','fontSize','cols','autoWrap','carriage'].includes(k)) { lines = []; layout(); }
       if (['sound','volume'].includes(k)) { Sound.setVolume(); syncToolbar(); }
       if (k === 'ambience') Sound.setAmbience();
       if (k === 'forwardOnly') syncToolbar();
@@ -1175,7 +1187,7 @@ function boot() {
   let rT = 0; const onResize = () => { cancelAnimationFrame(rT); rT = requestAnimationFrame(layout); };
   window.addEventListener('resize', onResize);
   if (vv) { vv.addEventListener('resize', onResize); vv.addEventListener('scroll', onResize); }
-  if (document.fonts) document.fonts.ready.then(() => { lines = []; layout(); });
+  if (document.fonts) { document.fonts.ready.then(() => { lines = []; layout(); }); document.fonts.addEventListener && document.fonts.addEventListener('loadingdone', () => { lines = []; layout(); }); }
   if (!('ontouchstart' in window)) setTimeout(focusInput, 200);
   else $('#hint').textContent = 'Tippe aufs Blatt und schreib los. Nach unten wischen: nur noch Schrift.';
   if (!('ontouchstart' in window)) $('#hint').textContent = 'Tipp einfach los. ⌘/Strg + . blendet alles aus.';
