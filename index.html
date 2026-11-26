@@ -762,7 +762,21 @@ const Sound = {
 };
 
 ['touchend', 'click', 'keydown', 'pointerup'].forEach(ev => document.addEventListener(ev, () => { if (S.sound) Sound.init(); }, { capture:true, passive:true }));
-document.addEventListener('visibilitychange', () => { if (!document.hidden && Sound.ctx) { Sound.unlocked = false; } });
+// Seite verlassen / Safari schließen / Bildschirm aus: jeglichen Ton sofort anhalten.
+// Zurück auf der Seite läuft er beim nächsten Tippen oder Antippen weiter.
+function pauseAudio() {
+  if (Sound.silentEl) { try { Sound.silentEl.pause(); } catch {} }
+  try { if (navigator.audioSession) navigator.audioSession.type = 'auto'; } catch {}
+  if (Sound.ctx && Sound.ctx.state === 'running') Sound.ctx.suspend().catch(() => {});
+  Sound.unlocked = false;
+  if ('mediaSession' in navigator) { try { navigator.mediaSession.playbackState = 'none'; } catch {} }
+}
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) pauseAudio();
+  else if (Sound.ctx && S.sound) Sound.init();   // Rückkehr: wenn möglich sofort weiter, sonst beim nächsten Antippen
+});
+window.addEventListener('pagehide', pauseAudio);
+window.addEventListener('blur', () => { if (document.hidden) pauseAudio(); });
 
 /* ================= Dokumente / Archiv ================= */
 let docs = store.get('adler500.docs', []);
