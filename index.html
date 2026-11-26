@@ -38,35 +38,32 @@ button{font:inherit;color:inherit;cursor:pointer}
 #app{position:fixed;left:0;right:0;top:0;height:var(--vvh,100%);overflow:hidden;background:var(--desk);transition:background .5s}
 
 /* ---------- Lampe ---------- */
-.lamp{position:absolute;left:-100vw;width:200vw;top:0;height:calc(var(--typing-y) + .95*var(--fs) - 10px - .78*var(--fs));pointer-events:none;mix-blend-mode:screen;
+.lamp{position:absolute;left:-100vw;width:200vw;top:0;height:calc(var(--typing-y) + 1.05*var(--fs) - 10px);pointer-events:none;mix-blend-mode:screen;
   transform:translateX(calc(var(--caret-x) + var(--cw)*.5px));transition:opacity .7s ease;will-change:transform;
   --la:var(--lamp-a);
-  background:
-   conic-gradient(from 0deg at 50% 100%,
-     rgba(var(--lamp),var(--la)) 0deg,
-     rgba(var(--lamp),calc(var(--la)*.97)) calc(16deg*var(--halo)),
-     rgba(var(--lamp),calc(var(--la)*.86)) calc(24deg*var(--halo)),
-     rgba(var(--lamp),calc(var(--la)*.68)) calc(31deg*var(--halo)),
-     rgba(var(--lamp),calc(var(--la)*.48)) calc(38deg*var(--halo)),
-     rgba(var(--lamp),calc(var(--la)*.30)) calc(45deg*var(--halo)),
-     rgba(var(--lamp),calc(var(--la)*.17)) calc(53deg*var(--halo)),
-     rgba(var(--lamp),calc(var(--la)*.08)) calc(62deg*var(--halo)),
-     rgba(var(--lamp),calc(var(--la)*.025)) calc(73deg*var(--halo)),
-     rgba(var(--lamp),0) calc(86deg*var(--halo)),
-     rgba(var(--lamp),0) calc(360deg - 86deg*var(--halo)),
-     rgba(var(--lamp),calc(var(--la)*.025)) calc(360deg - 73deg*var(--halo)),
-     rgba(var(--lamp),calc(var(--la)*.08)) calc(360deg - 62deg*var(--halo)),
-     rgba(var(--lamp),calc(var(--la)*.17)) calc(360deg - 53deg*var(--halo)),
-     rgba(var(--lamp),calc(var(--la)*.30)) calc(360deg - 45deg*var(--halo)),
-     rgba(var(--lamp),calc(var(--la)*.48)) calc(360deg - 38deg*var(--halo)),
-     rgba(var(--lamp),calc(var(--la)*.68)) calc(360deg - 31deg*var(--halo)),
-     rgba(var(--lamp),calc(var(--la)*.86)) calc(360deg - 24deg*var(--halo)),
-     rgba(var(--lamp),calc(var(--la)*.97)) calc(360deg - 16deg*var(--halo)),
-     rgba(var(--lamp),var(--la)) 360deg);
-  -webkit-mask-image:radial-gradient(ellipse calc(80vh*var(--reach)) calc(100vh*var(--reach)) at 50% 100%, rgba(0,0,0,.75) 0%, #000 8%, #000 28%, rgba(0,0,0,.7) 48%, rgba(0,0,0,.4) 66%, rgba(0,0,0,.16) 82%, transparent 100%);
-          mask-image:radial-gradient(ellipse calc(80vh*var(--reach)) calc(100vh*var(--reach)) at 50% 100%, rgba(0,0,0,.75) 0%, #000 8%, #000 28%, rgba(0,0,0,.7) 48%, rgba(0,0,0,.4) 66%, rgba(0,0,0,.16) 82%, transparent 100%)}
-.lamp::after{content:"";position:absolute;inset:0;
-  background:radial-gradient(ellipse calc(60vh*var(--reach)) calc(40vh*var(--reach)) at 50% 40%, rgba(var(--lamp),calc(var(--la)*.18)) 0%, rgba(var(--lamp),0) 100%)}
+  background:conic-gradient(from 0deg at 50% 100%,
+     rgba(var(--lamp),calc(var(--la)*1)) 0deg,
+     rgba(var(--lamp),calc(var(--la)*0.97)) calc(22deg*var(--halo)),
+     rgba(var(--lamp),calc(var(--la)*0.9)) calc(31deg*var(--halo)),
+     rgba(var(--lamp),calc(var(--la)*0.66)) calc(35deg*var(--halo)),
+     rgba(var(--lamp),calc(var(--la)*0.42)) calc(39deg*var(--halo)),
+     rgba(var(--lamp),calc(var(--la)*0.33)) calc(46deg*var(--halo)),
+     rgba(var(--lamp),calc(var(--la)*0.24)) calc(54deg*var(--halo)),
+     rgba(var(--lamp),calc(var(--la)*0.13)) calc(62deg*var(--halo)),
+     rgba(var(--lamp),calc(var(--la)*0.05)) calc(70deg*var(--halo)),
+     rgba(var(--lamp),calc(var(--la)*0)) calc(77deg*var(--halo)),
+     rgba(var(--lamp),calc(var(--la)*0)) calc(360deg - 77deg*var(--halo)),
+     rgba(var(--lamp),calc(var(--la)*0.05)) calc(360deg - 70deg*var(--halo)),
+     rgba(var(--lamp),calc(var(--la)*0.13)) calc(360deg - 62deg*var(--halo)),
+     rgba(var(--lamp),calc(var(--la)*0.24)) calc(360deg - 54deg*var(--halo)),
+     rgba(var(--lamp),calc(var(--la)*0.33)) calc(360deg - 46deg*var(--halo)),
+     rgba(var(--lamp),calc(var(--la)*0.42)) calc(360deg - 39deg*var(--halo)),
+     rgba(var(--lamp),calc(var(--la)*0.66)) calc(360deg - 35deg*var(--halo)),
+     rgba(var(--lamp),calc(var(--la)*0.9)) calc(360deg - 31deg*var(--halo)),
+     rgba(var(--lamp),calc(var(--la)*0.97)) calc(360deg - 22deg*var(--halo)),
+     rgba(var(--lamp),calc(var(--la)*1)) 360deg);
+  -webkit-mask-image:radial-gradient(ellipse calc(85vh*var(--reach)) calc(105vh*var(--reach)) at 50% 100%, rgba(0,0,0,.8) 0%, #000 6%, #000 26%, rgba(0,0,0,.72) 46%, rgba(0,0,0,.42) 64%, rgba(0,0,0,.17) 82%, transparent 100%);
+          mask-image:radial-gradient(ellipse calc(85vh*var(--reach)) calc(105vh*var(--reach)) at 50% 100%, rgba(0,0,0,.8) 0%, #000 6%, #000 26%, rgba(0,0,0,.72) 46%, rgba(0,0,0,.42) 64%, rgba(0,0,0,.17) 82%, transparent 100%)}
 .lamp.ret{transition:transform .36s cubic-bezier(.3,.9,.25,1),opacity .7s ease}
 .lamp.step{transition:transform .07s linear,opacity .7s ease}
 [data-paper="leinen"] .lamp{mix-blend-mode:normal}
@@ -98,9 +95,9 @@ svg.i{fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;strok
 .sheet.glide{transition:transform .5s cubic-bezier(.2,.8,.2,1)}
 .ln{height:var(--lh);text-shadow:0 0 .6px currentColor}
 .ln.para{}
-.platen{position:absolute;left:0;right:0;height:5px;top:calc(var(--typing-y) + .95*var(--fs));background:linear-gradient(to bottom,#3a3430,var(--platen) 45%,#2a2522);
+.platen{position:absolute;left:0;right:0;height:5px;top:calc(var(--typing-y) + 2*var(--fs));background:linear-gradient(to bottom,#3a3430,var(--platen) 45%,#2a2522);
   box-shadow:0 1px 0 rgba(255,255,255,.10),0 4px 12px rgba(0,0,0,.22);transition:opacity .7s}
-.carriage{position:absolute;top:calc(var(--typing-y) + .95*var(--fs) + 2.5px);left:0;transform:translateX(var(--caret-x));pointer-events:none;z-index:2;transition:opacity .7s}
+.carriage{position:absolute;top:calc(var(--typing-y) + 2*var(--fs) + 2.5px);left:0;transform:translateX(var(--caret-x));pointer-events:none;z-index:2;transition:opacity .7s}
 .carriage.ret{transition:transform .36s cubic-bezier(.3,.9,.25,1)}
 .carriage.step{transition:transform .07s linear}
 .carriage .pill{position:absolute;left:calc(var(--cw)*.5px - 33px);top:-12.5px;width:66px;height:25px;border-radius:13px;
@@ -108,23 +105,21 @@ svg.i{fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;strok
   display:flex;align-items:center;justify-content:center;gap:6px}
 .carriage .pill i{width:8px;height:8px;border-radius:50%;background:#4b4642;transition:background .5s}
 .carriage .pill i.on{background:#e4a748;box-shadow:0 0 4px rgba(228,167,72,.6)}
-.carriage .tbar{position:absolute;left:calc(var(--cw)*.5px - .32*var(--fs));top:calc(-12.5px - .78*var(--fs));width:calc(.64*var(--fs));height:calc(.78*var(--fs));transform-origin:50% 100%}
-.carriage .cur{position:absolute;left:-1px;top:calc(-2.5px - .95*var(--fs) - .575*var(--fs) - .78*var(--fs));width:2px;height:calc(.98*var(--fs));border-radius:1px;background:#d9787a;animation:blink 1.1s steps(1) infinite}
+.carriage .tbar{position:absolute;left:calc(var(--cw)*.5px - .43*var(--fs));top:calc(-12.5px - 1.05*var(--fs));width:calc(.86*var(--fs));height:calc(1.05*var(--fs));transform-origin:50% 100%}
+.carriage .cur{position:absolute;left:-1px;top:calc(-2.5px - 3.355*var(--fs));width:2px;height:calc(.98*var(--fs));border-radius:1px;background:#d9787a;animation:blink 1.1s steps(1) infinite}
 .typing .carriage .cur{animation:none}
 @keyframes blink{50%{opacity:0}}
-.carriage .tbar::before{content:"";position:absolute;left:0;right:0;top:0;height:max(3px,calc(.15*var(--fs)));background:var(--ink);border-radius:1px}
-.carriage .tbar::after{content:"";position:absolute;left:50%;top:0;bottom:0;width:max(3px,calc(.15*var(--fs)));transform:translateX(-50%);background:var(--ink)}
+.carriage .tbar::before{content:"";position:absolute;left:0;right:0;top:0;height:max(3px,calc(.17*var(--fs)));background:var(--ink);border-radius:1px}
+.carriage .tbar::after{content:"";position:absolute;left:50%;top:0;bottom:0;width:max(3px,calc(.17*var(--fs)));transform:translateX(-50%);background:var(--ink)}
 .carriage .tbar.strike{animation:strike .12s ease-out}
 @keyframes strike{40%{transform:translateY(-3px) scaleY(.88)}}
-.hint{position:absolute;left:var(--left);top:calc(var(--typing-y) + .95*var(--fs) + 36px);font-family:var(--serif);font-style:italic;font-size:17px;color:var(--ink-soft);pointer-events:none;transition:opacity .5s;max-width:calc(100vw - 32px)}
-[data-paper="velin"] .hint,[data-paper="schiefer"] .hint{color:rgba(243,237,228,.8)}
 .locked-flash .platen{animation:shake .28s}
 @keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
-.back-to-line{position:absolute;left:50%;top:calc(var(--typing-y) + .95*var(--fs) + 36px);transform:translateX(-50%);z-index:6;border:0;border-radius:99px;padding:8px 14px;background:var(--btn);color:var(--btn-ink);font-size:13px;font-weight:500;box-shadow:0 4px 14px rgba(0,0,0,.2);opacity:0;pointer-events:none;transition:opacity .25s}
+.back-to-line{position:absolute;left:50%;top:calc(var(--typing-y) + 2*var(--fs) + 36px);transform:translateX(-50%);z-index:6;border:0;border-radius:99px;padding:8px 14px;background:var(--btn);color:var(--btn-ink);font-size:13px;font-weight:500;box-shadow:0 4px 14px rgba(0,0,0,.2);opacity:0;pointer-events:none;transition:opacity .25s}
 .back-to-line.show{opacity:1;pointer-events:auto}
 
 /* ---------- Fokus-Modus: nur die Schrift ---------- */
-#app.focus .lamp,#app.focus .vignette,#app.focus .platen,#app.focus .carriage,#app.focus .hint,#app.focus .statusbar,#app.focus .back-to-line{opacity:0!important;pointer-events:none}
+#app.focus .lamp,#app.focus .vignette,#app.focus .platen,#app.focus .carriage,#app.focus .statusbar,#app.focus .back-to-line{opacity:0!important;pointer-events:none}
 #app.focus .topbar{opacity:0;transform:translateY(-12px);pointer-events:none}
 .sheet{transition:color .6s}
 
@@ -328,7 +323,6 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border:0;border-radiu
     <div class="sheet-mask"><div class="sheet" id="sheet"></div></div>
     <div class="platen"></div>
     <div class="carriage" id="carriage"><span class="cur"></span><span class="tbar" id="tbar"></span><span class="pill" id="pill" title="Fortschritt zum Wortziel"><i></i><i></i><i></i></span></div>
-    <div class="hint" id="hint">Tipp einfach los. Jeder Anschlag zählt.</div>
     <button class="back-to-line" id="backToLine">↓ Zurück zur Zeile</button>
   </main>
 
@@ -655,7 +649,6 @@ function render(instant, mode) {
   app.style.setProperty('--caret-x', caretX + 'px');
   carriage.style.opacity = scrollBack ? .25 : '';
   $('#backToLine').classList.toggle('show', scrollBack > 1);
-  $('#hint').style.opacity = doc.text.length ? 0 : 1;
   updateStatus();
   placeInput();
 }
@@ -849,7 +842,7 @@ function applyLook() {
   app.style.setProperty('--lamp', c.join(','));
   const base = { velin:.95, leinen:.45, schiefer:.85, nacht:.5 }[S.paper];
   app.style.setProperty('--lamp-a', (base * (.15 + S.brightness * .85)).toFixed(3));
-  app.style.setProperty('--halo', (.6 + S.halo * .8).toFixed(3));
+  app.style.setProperty('--halo', (.8 + S.halo * .35).toFixed(3));
   app.style.setProperty('--reach', (.65 + S.halo * .7).toFixed(3));
 }
 const tb = (id, fn) => { const b = $(id); b.addEventListener('click', e => { Sound.init(); fn(e); }); b.addEventListener('mousedown', e => e.preventDefault()); };
@@ -1200,8 +1193,6 @@ function boot() {
   if (vv) { vv.addEventListener('resize', onResize); vv.addEventListener('scroll', onResize); }
   if (document.fonts) { document.fonts.ready.then(() => { lines = []; layout(); }); document.fonts.addEventListener && document.fonts.addEventListener('loadingdone', () => { lines = []; layout(); }); }
   if (!('ontouchstart' in window)) setTimeout(focusInput, 200);
-  else $('#hint').textContent = 'Tippe aufs Blatt und schreib los. Nach unten wischen: nur noch Schrift.';
-  if (!('ontouchstart' in window)) $('#hint').textContent = 'Tipp einfach los. ⌘/Strg + . blendet alles aus.';
   document.addEventListener('visibilitychange', () => { if (document.hidden) saveNow(); });
   window.addEventListener('pagehide', saveNow);
   window.addEventListener('beforeunload', saveNow);
