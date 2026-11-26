@@ -525,9 +525,16 @@ const Sound = {
     const c = this.ctx, osc = c.createOscillator(); osc.type = o.type || 'sine';
     osc.frequency.setValueAtTime(o.freq, t); if (o.to) osc.frequency.exponentialRampToValueAtTime(o.to, t + o.dur);
     const g = c.createGain(); this.env(g, t, o.a || .003, o.peak, o.dur);
-    osc.connect(g).connect(this.master); osc.start(t); osc.stop(t + o.dur + .05);
+    osc.connect(g).connect(o.dest || this.master); osc.start(t); osc.stop(t + o.dur + .05);
+  },
+  // Neuer Anschlag: laufenden Wagenrücklauf sofort ausblenden, damit der Anschlag klar bleibt
+  duck() {
+    if (this.retBus && this.ctx.currentTime < this.retUntil) this.retBus.gain.setTargetAtTime(0, this.ctx.currentTime, .012);
+    this.retBus = null;
   },
   key(kind) {
+    if (!this.ctx) return;
+    this.duck();
     if (!this.ok('keys')) return;
     let m = MACHINES[S.machine];
     if (m.sample) {
@@ -562,6 +569,7 @@ const Sound = {
     this.noise(t + .011, { freq:2900 * v, q:3, peak:.07, dur:.005, a:.0004 });
   },
   back() {
+    if (this.ctx) this.duck();
     if (!this.ok('keys')) return;
     if (MACHINES[S.machine].sample && this.buf) { this.play(this.pick(this.SPRITE.keys), { rate:.8, gain:.55, lp:3000 }); return; }
     const t = this.ctx.currentTime;
@@ -586,22 +594,23 @@ const Sound = {
   carriage() {
     if (!this.ok('ret')) return;
     const c = this.ctx, t = c.currentTime + .01;
+    const bus = c.createGain(); bus.connect(this.master); this.retBus = bus; this.retUntil = t + .6;
     // Zeilenschaltung: Ratsche
-    for (let i = 0; i < 3; i++) this.noise(t + i * .028, { freq:2500 + Math.random() * 500, q:4, peak:.22, dur:.009, a:.0005 });
-    this.tone(t + .06, { freq:140, to:90, peak:.2, dur:.05 });
+    for (let i = 0; i < 3; i++) this.noise(t + i * .028, { freq:2500 + Math.random() * 500, q:4, peak:.22, dur:.009, a:.0005, dest:bus });
+    this.tone(t + .06, { freq:140, to:90, peak:.2, dur:.05, dest:bus });
     // Wagen gleitet zurück
     const st = t + .1, len = .3;
     const s = c.createBufferSource(); s.buffer = this.white;
     const f = c.createBiquadFilter(); f.type = 'bandpass'; f.Q.value = .8; f.frequency.setValueAtTime(1600, st); f.frequency.exponentialRampToValueAtTime(700, st + len);
     const g = c.createGain(); g.gain.setValueAtTime(.0001, st); g.gain.linearRampToValueAtTime(.13, st + .06); g.gain.linearRampToValueAtTime(.08, st + len - .04); g.gain.linearRampToValueAtTime(.0001, st + len);
-    s.connect(f).connect(g).connect(this.master); s.start(st, Math.random()); s.stop(st + len + .05);
-    for (let i = 0; i < 10; i++) this.noise(st + i * (len / 10) + Math.random() * .01, { freq:3200 + Math.random() * 1500, q:5, peak:.035, dur:.004 });
+    s.connect(f).connect(g).connect(bus); s.start(st, Math.random()); s.stop(st + len + .05);
+    for (let i = 0; i < 10; i++) this.noise(st + i * (len / 10) + Math.random() * .01, { freq:3200 + Math.random() * 1500, q:5, peak:.035, dur:.004, dest:bus });
     // Anschlag am Rand
     const e = st + len;
-    this.noise(e, { type:'highpass', freq:700, q:.5, peak:.6, dur:.006, a:.0004 });
-    this.tone(e, { freq:105, to:55, peak:.6, dur:.13, a:.001 });
-    this.tone(e, { freq:1820, peak:.05, dur:.12, a:.0008 });
-    this.tone(e, { freq:2960, peak:.03, dur:.08, a:.0008 });
+    this.noise(e, { type:'highpass', freq:700, q:.5, peak:.6, dur:.006, a:.0004, dest:bus });
+    this.tone(e, { freq:105, to:55, peak:.6, dur:.13, a:.001, dest:bus });
+    this.tone(e, { freq:1820, peak:.05, dur:.12, a:.0008, dest:bus });
+    this.tone(e, { freq:2960, peak:.03, dur:.08, a:.0008, dest:bus });
   },
   setAmbience() {
     if (!this.ctx) return;
