@@ -1,0 +1,21 @@
+# Adler 500 – Schreibmaschine für Essays
+
+Eine ablenkungsfreie Schreibmaschine im Browser: eine Zeile unter der Lampe, Tastenklang, Glocke, Wagenrücklauf – und ein Archiv mit animiertem Schreibprotokoll.
+
+## Funktionen
+- **Schreibmaschinen-Gefühl:** Das Blatt wird zeilenweise hochgezogen, der Wagen springt zurück, die Glocke klingelt 8 Zeichen vor dem Rand.
+- **Nur vorwärts (⌫-Knopf):** Löschen, Rückgängig und Cursor-zurück sind gesperrt.
+- **Archiv / Logbuch:** Jeder Text wird automatisch gespeichert. Mit ✓ abschließen → Schreibprotokoll (Wörter, Schreibzeit, Anschläge, Tempo, Seiten, Sitzungen) mit animierter Route zum Wortziel. Im Archiv: Gesamtstatistik, Wörter pro Tag (14 Tage), Serie, Suche, Wieder öffnen, Lesen, Export, Löschen.
+- **Einstellungen:** Papier, Schrift, Maschine (Klang), Schriftgröße, Zeilenbreite · Lampe (Wärme, Helligkeit, Lichtkegel) · Ton (Tasten, Glocke, Wagen, Atmosphäre: Regen, Kamin, Brandung) · Wortziel, Wortumbruch.
+- **Export:** .txt, .md, Zwischenablage, Teilen. Archiv-Sicherung als JSON (und wieder einlesen).
+- **Offline & als App:** Funktioniert offline (Service Worker) und lässt sich auf dem iPhone über „Zum Home-Bildschirm“ installieren.
+
+## Bedienung
+- Mausrad / Wischen auf dem Blatt: zurückblättern und lesen (Tippen springt zurück zur Zeile).
+- `⌘/Strg + S` speichern · `⌘/Strg + Enter` abschließen · `Esc` schließt Fenster.
+
+## Starten
+Einfach `index.html` im Browser öffnen – oder über GitHub Pages hosten (Settings → Pages → Branch wählen).
+Für Service Worker/Installation muss die Seite über `http(s)` laufen, z. B. lokal: `python3 -m http.server`.
+
+Alle Texte liegen nur lokal im Browser (localStorage). Sichere dein Archiv regelmäßig über „Archiv sichern“.
