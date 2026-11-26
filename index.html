@@ -14,10 +14,10 @@
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Cutive+Mono&family=Special+Elite&family=Newsreader:opsz,wght@6..72,400;6..72,500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Cutive+Mono&family=Special+Elite&family=IBM+Plex+Mono:wght@400&family=Space+Mono&family=Xanh+Mono&family=Anonymous+Pro&family=Newsreader:opsz,wght@6..72,400;6..72,500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
-  --desk:#7f7772; --desk-2:#6f6762; --ink:#1c1916; --ink-soft:rgba(28,25,22,.62); --platen:#1a1715;
+  --desk:#7f7772; --desk-2:#6f6762; --ink:#1c1916; --ink-soft:rgba(28,25,22,.62); --platen:#1a1715; --platen-hi:#4a433d;
   --lamp:255,226,180; --lamp-a:.85; --halo:1;
   --chrome:#f6f2ec; --chrome-ink:#1f1b17; --chrome-soft:#6c645d; --chrome-line:rgba(31,27,23,.10);
   --panel:#fbf9f6; --card:#f2eee8; --accent:#6e2a25; --amber:#d9a441; --amber-ink:#7a5410;
@@ -28,7 +28,7 @@
 }
 [data-paper="leinen"]{ --desk:#e7e0d4; --desk-2:#d9d1c3; --ink:#1c1916; --ink-soft:rgba(28,25,22,.58); --platen:#2a2420; --lamp-a:.55; }
 [data-paper="schiefer"]{ --desk:#5f6872; --desk-2:#525a63; --ink:#14171a; --ink-soft:rgba(20,23,26,.66); --platen:#121416; }
-[data-paper="nacht"]{ --desk:#22201e; --desk-2:#1a1817; --ink:#efe6d6; --ink-soft:rgba(239,230,214,.6); --platen:#0b0a09;
+[data-paper="nacht"]{ --desk:#131110; --desk-2:#0f0e0d; --platen-hi:#5e5750; --ink:#efe6d6; --ink-soft:rgba(239,230,214,.6); --platen:#0b0a09;
   --panel:#2a2724; --card:#34302c; --chrome-ink:#f1ebe2; --chrome-soft:#b2a99f; --chrome-line:rgba(241,235,226,.12);
   --btn:#3a3632; --btn-ink:#f1ebe2; --btn-on:#efe6d6; --btn-on-ink:#1c1916; --accent:#c9675d; --amber-ink:#e9be6a; --lamp-a:.38; }
 *{box-sizing:border-box}
@@ -38,32 +38,36 @@ button{font:inherit;color:inherit;cursor:pointer}
 #app{position:fixed;left:0;right:0;top:0;height:var(--vvh,100%);overflow:hidden;background:var(--desk);transition:background .5s}
 
 /* ---------- Lampe ---------- */
-.lamp{position:absolute;left:-100vw;width:200vw;top:0;height:calc(var(--typing-y) + 1.05*var(--fs) - 10px);pointer-events:none;mix-blend-mode:screen;
+.lamp{position:absolute;left:-100vw;width:200vw;top:0;height:calc(var(--typing-y) + 1.75*var(--fs) - 10.5px);pointer-events:none;mix-blend-mode:screen;
   transform:translateX(calc(var(--caret-x) + var(--cw)*.5px));transition:opacity .7s ease;will-change:transform;
   --la:var(--lamp-a);
   background:conic-gradient(from 0deg at 50% 100%,
      rgba(var(--lamp),calc(var(--la)*1)) 0deg,
-     rgba(var(--lamp),calc(var(--la)*0.97)) calc(22deg*var(--halo)),
-     rgba(var(--lamp),calc(var(--la)*0.9)) calc(31deg*var(--halo)),
-     rgba(var(--lamp),calc(var(--la)*0.66)) calc(35deg*var(--halo)),
-     rgba(var(--lamp),calc(var(--la)*0.42)) calc(39deg*var(--halo)),
-     rgba(var(--lamp),calc(var(--la)*0.33)) calc(46deg*var(--halo)),
-     rgba(var(--lamp),calc(var(--la)*0.24)) calc(54deg*var(--halo)),
-     rgba(var(--lamp),calc(var(--la)*0.13)) calc(62deg*var(--halo)),
-     rgba(var(--lamp),calc(var(--la)*0.05)) calc(70deg*var(--halo)),
-     rgba(var(--lamp),calc(var(--la)*0)) calc(77deg*var(--halo)),
-     rgba(var(--lamp),calc(var(--la)*0)) calc(360deg - 77deg*var(--halo)),
-     rgba(var(--lamp),calc(var(--la)*0.05)) calc(360deg - 70deg*var(--halo)),
-     rgba(var(--lamp),calc(var(--la)*0.13)) calc(360deg - 62deg*var(--halo)),
-     rgba(var(--lamp),calc(var(--la)*0.24)) calc(360deg - 54deg*var(--halo)),
-     rgba(var(--lamp),calc(var(--la)*0.33)) calc(360deg - 46deg*var(--halo)),
-     rgba(var(--lamp),calc(var(--la)*0.42)) calc(360deg - 39deg*var(--halo)),
-     rgba(var(--lamp),calc(var(--la)*0.66)) calc(360deg - 35deg*var(--halo)),
-     rgba(var(--lamp),calc(var(--la)*0.9)) calc(360deg - 31deg*var(--halo)),
-     rgba(var(--lamp),calc(var(--la)*0.97)) calc(360deg - 22deg*var(--halo)),
+     rgba(var(--lamp),calc(var(--la)*0.97)) calc(30deg*var(--halo)),
+     rgba(var(--lamp),calc(var(--la)*0.86)) calc(40deg*var(--halo)),
+     rgba(var(--lamp),calc(var(--la)*0.68)) calc(47deg*var(--halo)),
+     rgba(var(--lamp),calc(var(--la)*0.54)) calc(53deg*var(--halo)),
+     rgba(var(--lamp),calc(var(--la)*0.47)) 60deg,
+     rgba(var(--lamp),calc(var(--la)*0.38)) 67deg,
+     rgba(var(--lamp),calc(var(--la)*0.26)) 74deg,
+     rgba(var(--lamp),calc(var(--la)*0.14)) 80deg,
+     rgba(var(--lamp),calc(var(--la)*0.05)) 85deg,
+     rgba(var(--lamp),calc(var(--la)*0)) 89deg,
+     rgba(var(--lamp),calc(var(--la)*0)) 271deg,
+     rgba(var(--lamp),calc(var(--la)*0.05)) 275deg,
+     rgba(var(--lamp),calc(var(--la)*0.14)) 280deg,
+     rgba(var(--lamp),calc(var(--la)*0.26)) 286deg,
+     rgba(var(--lamp),calc(var(--la)*0.38)) 293deg,
+     rgba(var(--lamp),calc(var(--la)*0.47)) 300deg,
+     rgba(var(--lamp),calc(var(--la)*0.54)) calc(360deg - 53deg*var(--halo)),
+     rgba(var(--lamp),calc(var(--la)*0.68)) calc(360deg - 47deg*var(--halo)),
+     rgba(var(--lamp),calc(var(--la)*0.86)) calc(360deg - 40deg*var(--halo)),
+     rgba(var(--lamp),calc(var(--la)*0.97)) calc(360deg - 30deg*var(--halo)),
      rgba(var(--lamp),calc(var(--la)*1)) 360deg);
-  -webkit-mask-image:radial-gradient(ellipse calc(85vh*var(--reach)) calc(105vh*var(--reach)) at 50% 100%, rgba(0,0,0,.8) 0%, #000 6%, #000 26%, rgba(0,0,0,.72) 46%, rgba(0,0,0,.42) 64%, rgba(0,0,0,.17) 82%, transparent 100%);
-          mask-image:radial-gradient(ellipse calc(85vh*var(--reach)) calc(105vh*var(--reach)) at 50% 100%, rgba(0,0,0,.8) 0%, #000 6%, #000 26%, rgba(0,0,0,.72) 46%, rgba(0,0,0,.42) 64%, rgba(0,0,0,.17) 82%, transparent 100%)}
+  -webkit-mask-image:radial-gradient(ellipse calc(120vw*var(--reach) + 40vh) calc(var(--typing-y)*1.25*var(--reach) + 10vh) at 50% 100%, #000 0%, #000 22%, rgba(0,0,0,.8) 42%, rgba(0,0,0,.56) 62%, rgba(0,0,0,.36) 80%, rgba(0,0,0,.24) 100%),linear-gradient(to top, transparent 0, #000 calc(.55*var(--fs)));
+  -webkit-mask-composite:source-in;
+          mask-image:radial-gradient(ellipse calc(120vw*var(--reach) + 40vh) calc(var(--typing-y)*1.25*var(--reach) + 10vh) at 50% 100%, #000 0%, #000 22%, rgba(0,0,0,.8) 42%, rgba(0,0,0,.56) 62%, rgba(0,0,0,.36) 80%, rgba(0,0,0,.24) 100%),linear-gradient(to top, transparent 0, #000 calc(.55*var(--fs)));
+          mask-composite:intersect}
 .lamp.ret{transition:transform .36s cubic-bezier(.3,.9,.25,1),opacity .7s ease}
 .lamp.step{transition:transform .07s linear,opacity .7s ease}
 [data-paper="leinen"] .lamp{mix-blend-mode:normal}
@@ -95,9 +99,9 @@ svg.i{fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;strok
 .sheet.glide{transition:transform .5s cubic-bezier(.2,.8,.2,1)}
 .ln{height:var(--lh);text-shadow:0 0 .6px currentColor}
 .ln.para{}
-.platen{position:absolute;left:0;right:0;height:5px;top:calc(var(--typing-y) + 2*var(--fs));background:linear-gradient(to bottom,#3a3430,var(--platen) 45%,#2a2522);
-  box-shadow:0 1px 0 rgba(255,255,255,.10),0 4px 12px rgba(0,0,0,.22);transition:opacity .7s}
-.carriage{position:absolute;top:calc(var(--typing-y) + 2*var(--fs) + 2.5px);left:0;transform:translateX(var(--caret-x));pointer-events:none;z-index:2;transition:opacity .7s}
+.platen{position:absolute;left:0;right:0;height:4px;top:calc(var(--typing-y) + 2.8*var(--fs));background:linear-gradient(to bottom,var(--platen-hi) 0,var(--platen-hi) 30%,var(--platen) 60%);
+  box-shadow:0 3px 8px rgba(0,0,0,.45);transition:opacity .7s}
+.carriage{position:absolute;top:calc(var(--typing-y) + 2.8*var(--fs) + 2px);left:0;transform:translateX(var(--caret-x));pointer-events:none;z-index:2;transition:opacity .7s}
 .carriage.ret{transition:transform .36s cubic-bezier(.3,.9,.25,1)}
 .carriage.step{transition:transform .07s linear}
 .carriage .pill{position:absolute;left:calc(var(--cw)*.5px - 33px);top:-12.5px;width:66px;height:25px;border-radius:13px;
@@ -106,7 +110,7 @@ svg.i{fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;strok
 .carriage .pill i{width:8px;height:8px;border-radius:50%;background:#4b4642;transition:background .5s}
 .carriage .pill i.on{background:#e4a748;box-shadow:0 0 4px rgba(228,167,72,.6)}
 .carriage .tbar{position:absolute;left:calc(var(--cw)*.5px - .43*var(--fs));top:calc(-12.5px - 1.05*var(--fs));width:calc(.86*var(--fs));height:calc(1.05*var(--fs));transform-origin:50% 100%}
-.carriage .cur{position:absolute;left:-1px;top:calc(-2.5px - 3.355*var(--fs));width:2px;height:calc(.98*var(--fs));border-radius:1px;background:#d9787a;animation:blink 1.1s steps(1) infinite}
+.carriage .cur{position:absolute;left:-1px;top:calc(-2px - 4.155*var(--fs));width:2px;height:calc(.98*var(--fs));border-radius:1px;background:#d9787a;animation:blink 1.1s steps(1) infinite}
 .typing .carriage .cur{animation:none}
 @keyframes blink{50%{opacity:0}}
 .carriage .tbar::before{content:"";position:absolute;left:0;right:0;top:0;height:max(3px,calc(.17*var(--fs)));background:var(--ink);border-radius:1px}
@@ -115,7 +119,7 @@ svg.i{fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;strok
 @keyframes strike{40%{transform:translateY(-3px) scaleY(.88)}}
 .locked-flash .platen{animation:shake .28s}
 @keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
-.back-to-line{position:absolute;left:50%;top:calc(var(--typing-y) + 2*var(--fs) + 36px);transform:translateX(-50%);z-index:6;border:0;border-radius:99px;padding:8px 14px;background:var(--btn);color:var(--btn-ink);font-size:13px;font-weight:500;box-shadow:0 4px 14px rgba(0,0,0,.2);opacity:0;pointer-events:none;transition:opacity .25s}
+.back-to-line{position:absolute;left:50%;top:calc(var(--typing-y) + 2.8*var(--fs) + 36px);transform:translateX(-50%);z-index:6;border:0;border-radius:99px;padding:8px 14px;background:var(--btn);color:var(--btn-ink);font-size:13px;font-weight:500;box-shadow:0 4px 14px rgba(0,0,0,.2);opacity:0;pointer-events:none;transition:opacity .25s}
 .back-to-line.show{opacity:1;pointer-events:auto}
 
 /* ---------- Fokus-Modus: nur die Schrift ---------- */
@@ -424,7 +428,12 @@ const PAPERS = { velin:'Vélin', leinen:'Leinen', schiefer:'Schiefer', nacht:'Na
 const FONTS = {
   courier:{ label:'Courier Prime', css:"'Courier Prime','Courier New',monospace" },
   elite:{ label:'Special Elite', css:"'Special Elite','Courier New',monospace" },
-  cutive:{ label:'Cutive Mono', css:"'Cutive Mono','Courier New',monospace" }
+  cutive:{ label:'Cutive Mono', css:"'Cutive Mono','Courier New',monospace" },
+  plex:{ label:'IBM Plex Mono', css:"'IBM Plex Mono','Courier New',monospace" },
+  space:{ label:'Space Mono', css:"'Space Mono','Courier New',monospace" },
+  xanh:{ label:'Xanh Mono', css:"'Xanh Mono','Courier New',monospace" },
+  anon:{ label:'Anonymous Pro', css:"'Anonymous Pro','Courier New',monospace" },
+  system:{ label:'Courier (System)', css:"'Courier New',Courier,monospace" }
 };
 const MACHINES = {
   portable:{ label:'Reisemaschine', click:3200, q:1.3, clickGain:.55, clickDur:.03, thump:150, thumpGain:.32, thumpDur:.05, rebound:.045 },
@@ -587,7 +596,7 @@ function layout() {
   probe.style.cssText = `position:absolute;left:-9999px;top:0;visibility:hidden;white-space:pre;font-variant-ligatures:none;font-family:${fam};font-size:${fs}px`;
   document.body.appendChild(probe); const real = probe.getBoundingClientRect().width / 50; probe.remove();
   if (real > 0) cw = real;
-  L.fs = fs; L.cw = cw; L.lh = Math.round(fs * 1.75);
+  L.fs = fs; L.cw = cw; L.lh = Math.round(fs * 1.75); L.fam = fam;
   L.cols = Math.max(20, Math.min(S.cols, Math.floor(avail / cw)));
   L.left = Math.round((L.vw - L.cols * cw) / 2);
   const top = 70, bottom = 56;
@@ -637,7 +646,8 @@ function render(instant, mode) {
   scrollBack = clamp(scrollBack, 0, last);
   const y = L.typingY - L.lh - (last - scrollBack) * L.lh;
   const col = Math.min(lines[last].t.length, L.cols);
-  const sheetX = L.left, caretX = L.left + col * L.cw;
+  measure.font = `${L.fs}px ${L.fam}`;
+  const sheetX = L.left, caretX = L.left + measure.measureText(lines[last].t.slice(0, col)).width;
   sheet.classList.toggle('feed', mode === 'feed');
   sheet.classList.toggle('glide', mode === 'glide');
   if (instant) { sheet.classList.remove('feed', 'glide'); carriage.classList.remove('ret', 'step'); lampEl.classList.remove('ret', 'step'); }
@@ -840,9 +850,9 @@ function applyLook() {
   const cool = [214, 232, 255], warm = [255, 206, 140];
   const c = cool.map((v, i) => Math.round(v + (warm[i] - v) * S.warmth));
   app.style.setProperty('--lamp', c.join(','));
-  const base = { velin:.95, leinen:.45, schiefer:.85, nacht:.5 }[S.paper];
+  const base = { velin:.95, leinen:.45, schiefer:.85, nacht:.44 }[S.paper];
   app.style.setProperty('--lamp-a', (base * (.15 + S.brightness * .85)).toFixed(3));
-  app.style.setProperty('--halo', (.8 + S.halo * .35).toFixed(3));
+  app.style.setProperty('--halo', (.8 + S.halo * .3).toFixed(3));
   app.style.setProperty('--reach', (.65 + S.halo * .7).toFixed(3));
 }
 const tb = (id, fn) => { const b = $(id); b.addEventListener('click', e => { Sound.init(); fn(e); }); b.addEventListener('mousedown', e => e.preventDefault()); };
@@ -873,7 +883,7 @@ function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.ad
 const SETTINGS_TABS = {
   'Blatt': [
     { k:'paper', type:'select', label:'Papier', desc:'Warmgrau, hell, blaugrau oder dunkel.', opts:PAPERS },
-    { k:'font', type:'select', label:'Schrift', desc:'Drei echte Typenschriften.', opts:Object.fromEntries(Object.entries(FONTS).map(([k,v]) => [k, v.label])) },
+    { k:'font', type:'select', label:'Schrift', desc:'Klassisch, abgenutzt, fein, Kugelkopf, retro …', opts:Object.fromEntries(Object.entries(FONTS).map(([k,v]) => [k, v.label])) },
     { k:'machine', type:'select', label:'Maschine', desc:'Verändert den Klang der Tasten und des Wagens.', opts:Object.fromEntries(Object.entries(MACHINES).map(([k,v]) => [k, v.label])) },
     { k:'fontSize', type:'range', label:'Schriftgröße', desc:'Auf dem Handy wird automatisch verkleinert.', min:14, max:28, step:1 },
     { k:'cols', type:'range', label:'Zeilenbreite', desc:'Anschläge pro Zeile, wie der Randsteller.', min:40, max:80, step:1 }

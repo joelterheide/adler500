@@ -6,7 +6,7 @@ Eine ablenkungsfreie Schreibmaschine im Browser: eine Zeile unter der Lampe, Tas
 - **Schreibmaschinen-Gefühl:** Lampe und Typenhebel bleiben mittig, das Blatt läuft beim Tippen durch (umstellbar auf „Kopf wandert“). Das Blatt wird zeilenweise hochgezogen, der Wagen springt zurück, die Glocke klingelt 8 Zeichen vor dem Rand.
 - **Nur vorwärts (⌫-Knopf):** Löschen, Rückgängig und Cursor-zurück sind gesperrt.
 - **Archiv / Logbuch:** Jeder Text wird automatisch gespeichert. Mit ✓ abschließen → Schreibprotokoll (Wörter, Schreibzeit, Anschläge, Tempo, Seiten, Sitzungen) mit animierter Route zum Wortziel. Im Archiv: Gesamtstatistik, Wörter pro Tag (14 Tage), Serie, Suche, Wieder öffnen, Lesen, Export, Löschen.
-- **Einstellungen:** Papier, Schrift, Maschine (Klang), Schriftgröße, Zeilenbreite · Lampe (Wärme, Helligkeit, Lichtkegel) · Ton (Tasten, Glocke, Wagen, Atmosphäre: Regen, Kamin, Brandung) · Wortziel, Wortumbruch.
+- **Einstellungen:** Papier, Schrift (8 Schreibmaschinenschriften), Maschine (Klang), Schriftgröße, Zeilenbreite · Lampe (Wärme, Helligkeit, Lichtkegel) · Ton (Tasten, Glocke, Wagen, Atmosphäre: Regen, Kamin, Brandung) · Wortziel, Wortumbruch.
 - **Export:** .txt, .md, Zwischenablage, Teilen. Archiv-Sicherung als JSON (und wieder einlesen).
 - **Offline & als App:** Funktioniert offline (Service Worker) und lässt sich auf dem iPhone über „Zum Home-Bildschirm“ installieren.
 
