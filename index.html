@@ -132,7 +132,7 @@ svg.i{fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;strok
 
 /* ---------- Statuszeile ---------- */
 .statusbar{position:absolute;left:0;right:0;bottom:var(--kb,0px);z-index:10;transition:opacity .6s;display:flex;align-items:flex-end;justify-content:space-between;gap:12px;
-  padding:10px max(20px,env(safe-area-inset-right)) calc(env(safe-area-inset-bottom) + 16px) max(20px,env(safe-area-inset-left));font-size:14px;color:var(--ink-soft);pointer-events:none;font-variant-numeric:tabular-nums}
+  padding:10px max(20px,env(safe-area-inset-right)) var(--sb-pad,calc(env(safe-area-inset-bottom) + 16px)) max(20px,env(safe-area-inset-left));font-size:14px;color:var(--ink-soft);pointer-events:none;font-variant-numeric:tabular-nums}
 [data-paper="velin"] .statusbar,[data-paper="schiefer"] .statusbar{color:rgba(243,237,228,.78)}
 .statusbar .left{display:flex;gap:14px;white-space:nowrap}
 .chip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:99px;background:rgba(0,0,0,.18);color:#f6efe4;font-size:12px;font-weight:500;opacity:0;transform:translateY(6px);transition:.3s}
@@ -851,6 +851,12 @@ function layout() {
   L.left = Math.round((L.vw - L.cols * cw) / 2);
   const top = 70, bottom = 56;
   L.typingY = Math.round(vTop + top + (L.vh - top - bottom) * (L.vh < 520 ? .62 : .55));
+  // Unter Linie + Schlitten muss die Statuszeile Platz haben (wichtig bei offener Tastatur)
+  const kbOpen = Math.round(app.getBoundingClientRect().height - L.vh - vTop) > 80;
+  const sbPad = kbOpen ? 10 : 16;
+  const below = 2.8 * fs + 14 + 18 + 26 + sbPad;      // Linie, Schlitten, Abstand, Statuszeile
+  L.typingY = Math.round(Math.max(vTop + top + L.lh * 1.2, Math.min(L.typingY, vTop + L.vh - below)));
+  app.style.setProperty('--sb-pad', kbOpen ? '10px' : 'calc(env(safe-area-inset-bottom) + 16px)');
   const st = app.style;
   st.setProperty('--fs', fs + 'px'); st.setProperty('--lh', L.lh + 'px'); st.setProperty('--typing-y', L.typingY + 'px');
   st.setProperty('--left', L.left + 'px'); st.setProperty('--colw', Math.ceil(L.cols * cw + cw) + 'px'); st.setProperty('--cw', cw);
