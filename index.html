@@ -33,9 +33,10 @@
   --btn:#3a3632; --btn-ink:#f1ebe2; --btn-on:#efe6d6; --btn-on-ink:#1c1916; --accent:#c9675d; --amber-ink:#e9be6a; --lamp-a:.38; }
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;overflow:hidden;background:var(--desk);color:var(--ink);font-family:var(--ui);-webkit-font-smoothing:antialiased;overscroll-behavior:none}
-body{position:fixed;inset:0;touch-action:manipulation}
+body{position:fixed;left:0;right:0;top:0;height:100%;height:100lvh;touch-action:manipulation}
 button{font:inherit;color:inherit;cursor:pointer}
-#app{position:fixed;inset:0;overflow:hidden;background:var(--desk);transition:background .5s}
+/* bis ganz nach unten – auch hinter die Safari-Leiste und den Home-Balken */
+#app{position:fixed;left:0;right:0;top:0;height:100%;height:100lvh;overflow:hidden;background:var(--desk);transition:background .5s}
 
 /* ---------- Lampe ---------- */
 .lamp{position:absolute;left:-100vw;width:200vw;top:0;height:calc(var(--typing-y) + 1.75*var(--fs) - 10.5px);pointer-events:none;mix-blend-mode:screen;
@@ -831,7 +832,8 @@ function layout() {
   L.vw = window.innerWidth; L.vh = vv ? vv.height : window.innerHeight;
   const vTop = vv ? vv.offsetTop : 0;
   document.documentElement.style.setProperty('--vvh', L.vh + 'px');
-  app.style.setProperty('--kb', Math.max(0, window.innerHeight - L.vh - vTop) + 'px');
+  // alles, was unten von Safari-Leiste oder Tastatur verdeckt ist – die Statuszeile bleibt darüber
+  app.style.setProperty('--kb', Math.max(0, Math.round(app.getBoundingClientRect().height - L.vh - vTop)) + 'px');
   let fs = S.fontSize;
   if (L.vw < 600) fs = Math.min(fs, 17);
   const fam = FONTS[S.font].css;
