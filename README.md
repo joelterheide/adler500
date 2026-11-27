@@ -7,7 +7,7 @@ Eine ablenkungsfreie Schreibmaschine im Browser: eine Zeile unter der Lampe, Tas
 - **Nur vorwärts (⌫-Knopf):** Löschen, Rückgängig und Cursor-zurück sind gesperrt.
 - **Archiv / Logbuch:** Jeder Text wird automatisch gespeichert. Mit ✓ abschließen → Schreibprotokoll (Wörter, Schreibzeit, Anschläge, Tempo, Seiten, Sitzungen) mit animierter Route zum Wortziel. Im Archiv: Gesamtstatistik, Wörter pro Tag (14 Tage), Serie, Suche, Wieder öffnen, Lesen, Export, Löschen.
 - **Einstellungen:** Papier, Schrift (8 Schreibmaschinenschriften), Maschine (Klang), Schriftgröße, Zeilenbreite · Lampe (Wärme, Helligkeit, Lichtkegel) · Ton (Tasten, Glocke, Wagen, Atmosphäre: Wald, Sommernacht, Strand, Regen, Kamin) · Wortziel, Wortumbruch.
-- **Export:** .txt, .md, Zwischenablage, Teilen. Archiv-Sicherung als JSON (und wieder einlesen).
+- **Export:** PDF, Word (.docx), .txt, .md, Zwischenablage, Teilen – auf iPhone/iPad über das Teilen-Menü („In Dateien sichern“). Archiv-Sicherung als JSON (und wieder einlesen).
 - **Offline & als App:** Funktioniert offline (Service Worker) und lässt sich auf dem iPhone über „Zum Home-Bildschirm“ installieren.
 
 ## Bedienung

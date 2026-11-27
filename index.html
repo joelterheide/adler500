@@ -1313,13 +1313,13 @@ function showLog(d, opt = {}) {
   body.querySelectorAll('.grid6 .v[data-w]').forEach(el => animateNum(el, +el.dataset.w, 1300, v => `${fmtN(v)}/min`, 570));
   setTimeout(() => { body.querySelectorAll('.srow i').forEach((el, i) => setTimeout(() => el.style.width = el.dataset.w + '%', i * 80)); const hl = body.querySelector('#sessHl'); if (hl) hl.classList.add('show'); }, 400);
   // Aktionen
-  body.querySelectorAll('[data-a]').forEach(b => b.addEventListener('click', () => {
+  body.querySelectorAll('[data-a]').forEach(b => b.addEventListener('click', ev => {
     const a = b.dataset.a;
     if (a === 'new') { close(); loadDoc(newDoc()); toast('Neues Blatt eingespannt'); Sound.carriage(); }
     if (a === 'continue') { close(); closeArchive(true); d.finished = null; if (doc !== d) loadDoc(d); else saveNow(); setTimeout(focusInput, 80); }
     if (a === 'archive') { close(); openArchive(); }
     if (a === 'read') openReader(d);
-    if (a === 'export') toggleExportMenu(d, b);
+    if (a === 'export') { ev.stopPropagation(); toggleExportMenu(d, b); }
     if (a === 'delete') {
       if (!confirm(`„${docTitle(d)}“ wirklich löschen? Das lässt sich nicht rückgängig machen.`)) return;
       docs = docs.filter(x => x !== d);
@@ -1423,27 +1423,125 @@ const menu = $('#exportMenu');
 function closeMenu() { menu.classList.remove('open'); }
 document.addEventListener('click', e => { if (!menu.contains(e.target)) closeMenu(); });
 function slug(s) { return (s || 'essay').toLowerCase().replace(/[äöüß]/g, c => ({ä:'ae',ö:'oe',ü:'ue',ß:'ss'}[c])).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 50) || 'essay'; }
-function download(name, content, type) {
-  const blob = new Blob([content], { type }); const a = document.createElement('a');
+// Datei ausgeben: auf iPhone/iPad über das Teilen-Menü (dort „In Dateien sichern“), sonst als Download
+async function download(name, content, type) {
+  const blob = content instanceof Blob ? content : new Blob([content], { type });
+  const touch = 'ontouchstart' in window;
+  try {
+    const file = new File([blob], name, { type: blob.type || type });
+    if (touch && navigator.canShare && navigator.canShare({ files:[file] })) { await navigator.share({ files:[file], title:name }); return; }
+  } catch (e) { if (e && e.name === 'AbortError') return; }
+  const a = document.createElement('a');
   a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click();
-  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
 }
+
+/* ---- Word (.docx): kleines ZIP ohne Kompression, selbst gebaut ---- */
+const CRC_T = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+const crc32 = b => { let c = 0xFFFFFFFF; for (let i = 0; i < b.length; i++) c = CRC_T[(c ^ b[i]) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; };
+function zip(files) {
+  const enc = new TextEncoder(), chunks = [], central = []; let off = 0;
+  for (const [name, text] of files) {
+    const nb = enc.encode(name), db = enc.encode(text), crc = crc32(db);
+    const h = new DataView(new ArrayBuffer(30));
+    h.setUint32(0, 0x04034b50, true); h.setUint16(4, 20, true); h.setUint16(6, 0x0800, true); h.setUint16(8, 0, true);
+    h.setUint32(14, crc, true); h.setUint32(18, db.length, true); h.setUint32(22, db.length, true); h.setUint16(26, nb.length, true);
+    chunks.push(new Uint8Array(h.buffer), nb, db);
+    const c = new DataView(new ArrayBuffer(46));
+    c.setUint32(0, 0x02014b50, true); c.setUint16(4, 20, true); c.setUint16(6, 20, true); c.setUint16(8, 0x0800, true);
+    c.setUint32(16, crc, true); c.setUint32(20, db.length, true); c.setUint32(24, db.length, true); c.setUint16(28, nb.length, true); c.setUint32(42, off, true);
+    central.push(new Uint8Array(c.buffer), nb);
+    off += 30 + nb.length + db.length;
+  }
+  const csize = central.reduce((n, a) => n + a.length, 0);
+  const e = new DataView(new ArrayBuffer(22));
+  e.setUint32(0, 0x06054b50, true); e.setUint16(8, files.length, true); e.setUint16(10, files.length, true); e.setUint32(12, csize, true); e.setUint32(16, off, true);
+  return new Blob([...chunks, ...central, new Uint8Array(e.buffer)], { type:'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+}
+function makeDocx(title, text) {
+  const x = t => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const font = '<w:rFonts w:ascii="Courier New" w:hAnsi="Courier New" w:cs="Courier New"/>';
+  const para = t => t === '' ? '<w:p><w:pPr><w:spacing w:after="0" w:line="360" w:lineRule="auto"/></w:pPr></w:p>'
+    : `<w:p><w:pPr><w:spacing w:after="0" w:line="360" w:lineRule="auto"/></w:pPr><w:r><w:rPr>${font}<w:sz w:val="24"/></w:rPr><w:t xml:space="preserve">${x(t)}</w:t></w:r></w:p>`;
+  const body = `<w:p><w:pPr><w:spacing w:after="360"/></w:pPr><w:r><w:rPr>${font}<w:b/><w:sz w:val="32"/></w:rPr><w:t xml:space="preserve">${x(title)}</w:t></w:r></w:p>` + text.split('\n').map(para).join('');
+  return zip([
+    ['[Content_Types].xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>'],
+    ['_rels/.rels', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>'],
+    ['word/document.xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>${body}<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1417" w:right="1417" w:bottom="1134" w:left="1417" w:header="709" w:footer="709" w:gutter="0"/></w:sectPr></w:body></w:document>`]
+  ]);
+}
+
+/* ---- PDF: A4, Schreibmaschinenschrift Courier, selbst gebaut ---- */
+function makePdf(title, text) {
+  const CP = { '€':128, '‚':130, '„':132, '…':133, '‘':145, '’':146, '“':147, '”':148, '•':149, '–':150, '—':151 };
+  const enc = str => { let o = ''; for (const ch of str) { const c = ch.codePointAt(0); const b = CP[ch] ?? (c < 256 ? c : 63);
+    if (b === 40 || b === 41 || b === 92) o += '\\' + String.fromCharCode(b); else if (b < 32 || b > 126) o += '\\' + b.toString(8).padStart(3, '0'); else o += String.fromCharCode(b); } return o; };
+  const W = 595.28, H = 841.89, M = 72, FS = 11, LH = 16.5, CW = FS * .6;
+  const cols = Math.floor((W - 2 * M) / CW), perPage = Math.floor((H - 2 * M) / LH);
+  const lines = [];
+  text.replace(/\t/g, '   ').split('\n').forEach(p => {
+    if (!p.length) { lines.push(''); return; }
+    let cur = '';
+    for (const tok of p.match(/ +|[^ ]+/g)) {
+      if (cur.length + tok.length <= cols) { cur += tok; continue; }
+      if (tok[0] === ' ') { lines.push(cur); cur = ''; continue; }
+      if (cur.trim()) lines.push(cur.replace(/ +$/, ''));
+      let t = tok; while (t.length > cols) { lines.push(t.slice(0, cols)); t = t.slice(cols); } cur = t;
+    }
+    lines.push(cur.replace(/ +$/, ''));
+  });
+  const pages = []; let i = 0, first = true;
+  do {
+    const n = first ? perPage - 3 : perPage, chunk = lines.slice(i, i + n); i += n;
+    let st = 'BT\n', y = H - M;
+    if (first) { st += `/F2 15 Tf 1 0 0 1 ${M} ${y.toFixed(2)} Tm (${enc(title)}) Tj\n`; y -= LH * 3; }
+    st += `/F1 ${FS} Tf\n`;
+    chunk.forEach(l => { if (l) st += `1 0 0 1 ${M} ${y.toFixed(2)} Tm (${enc(l)}) Tj\n`; y -= LH; });
+    pages.push(st + 'ET\n'); first = false;
+  } while (i < lines.length);
+  const objs = [];
+  objs[1] = '<< /Type /Catalog /Pages 2 0 R >>';
+  objs[3] = '<< /Type /Font /Subtype /Type1 /BaseFont /Courier /Encoding /WinAnsiEncoding >>';
+  objs[4] = '<< /Type /Font /Subtype /Type1 /BaseFont /Courier-Bold /Encoding /WinAnsiEncoding >>';
+  const u16 = [...title].map(ch => { const c = ch.codePointAt(0); return c > 0xFFFF ? '003F' : c.toString(16).padStart(4, '0'); }).join('');
+  objs[5] = `<< /Title <FEFF${u16}> /Producer (Adler 500) >>`;
+  const kids = [];
+  pages.forEach((st, k) => {
+    const content = st + `BT /F1 9 Tf 1 0 0 1 ${(W / 2 - 12).toFixed(2)} 40 Tm (${k + 1} / ${pages.length}) Tj ET\n`, po = 6 + k * 2, co = po + 1;
+    objs[po] = `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${W} ${H}] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents ${co} 0 R >>`;
+    objs[co] = `<< /Length ${content.length} >>\nstream\n${content}endstream`;
+    kids.push(`${po} 0 R`);
+  });
+  objs[2] = `<< /Type /Pages /Kids [${kids.join(' ')}] /Count ${pages.length} >>`;
+  let out = '%PDF-1.4\n%\xE2\xE3\xCF\xD3\n'; const xref = [];
+  for (let k = 1; k < objs.length; k++) { xref[k] = out.length; out += `${k} 0 obj\n${objs[k]}\nendobj\n`; }
+  const xo = out.length;
+  out += `xref\n0 ${objs.length}\n0000000000 65535 f \n` + xref.slice(1).map(o => String(o).padStart(10, '0') + ' 00000 n \n').join('');
+  out += `trailer\n<< /Size ${objs.length} /Root 1 0 R /Info 5 0 R >>\nstartxref\n${xo}\n%%EOF\n`;
+  const bytes = new Uint8Array(out.length); for (let k = 0; k < out.length; k++) bytes[k] = out.charCodeAt(k) & 255;
+  return new Blob([bytes], { type:'application/pdf' });
+}
+
 function toggleExportMenu(d, anchor) {
   if (menu.classList.contains('open')) { closeMenu(); return; }
   if (!d.text.trim()) { toast('Noch nichts zu exportieren.'); return; }
   const name = slug(docTitle(d)) + '-' + dayKey(d.updated);
   const items = [
-    ['txt', ICON.file, 'Als Text (.txt) laden'],
-    ['md', ICON.file, 'Als Markdown (.md) laden'],
+    ['pdf', ICON.file, 'PDF'],
+    ['docx', ICON.file, 'Word (.docx)'],
+    ['txt', ICON.file, 'Text (.txt)'],
+    ['md', ICON.file, 'Markdown (.md)'],
     ['copy', ICON.copy, 'In Zwischenablage kopieren']
   ];
   if (navigator.share) items.push(['share', ICON.share, 'Teilen …']);
   menu.innerHTML = items.map(([k, ic, l]) => `<button data-x="${k}" role="menuitem">${ic}${l}</button>`).join('');
-  if (anchor) { const r = anchor.getBoundingClientRect(); menu.style.top = Math.max(10, Math.min(window.innerHeight - 240, r.top - 200)) + 'px'; menu.style.right = Math.max(12, window.innerWidth - r.right) + 'px'; }
+  if (anchor) { const r = anchor.getBoundingClientRect(); menu.style.top = Math.max(10, Math.min(window.innerHeight - 330, r.top - 300)) + 'px'; menu.style.right = Math.max(12, window.innerWidth - r.right) + 'px'; }
   else { menu.style.top = ''; menu.style.right = ''; }
   menu.querySelectorAll('button').forEach(b => b.onclick = async e => {
     e.stopPropagation(); closeMenu();
     const x = b.dataset.x, title = docTitle(d);
+    if (x === 'pdf') download(name + '.pdf', makePdf(title, d.text));
+    if (x === 'docx') download(name + '.docx', makeDocx(title, d.text));
     if (x === 'txt') download(name + '.txt', d.text, 'text/plain;charset=utf-8');
     if (x === 'md') download(name + '.md', `# ${title}\n\n${d.text}\n`, 'text/markdown;charset=utf-8');
     if (x === 'copy') { try { await navigator.clipboard.writeText(d.text); toast('Kopiert'); } catch { toast('Kopieren nicht möglich'); } }
